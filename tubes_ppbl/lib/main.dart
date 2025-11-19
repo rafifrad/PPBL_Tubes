@@ -6,6 +6,9 @@ import 'screens/laundry_screen.dart';
 import 'screens/expense_screen.dart';
 import 'screens/bill_screen.dart';
 import 'screens/finance_note_screen.dart';
+import 'screens/daily_need_screen.dart';
+import 'screens/shopping_list_screen.dart';
+import 'screens/activity_reminder_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +50,9 @@ class _MainScreenState extends State<MainScreen> {
     const ExpenseScreen(),
     const BillScreen(),
     const FinanceNoteScreen(),
+    const DailyNeedScreen(),
+    const ShoppingListScreen(),
+    const ActivityReminderScreen(),
   ];
 
   final List<String> _titles = [
@@ -57,6 +63,9 @@ class _MainScreenState extends State<MainScreen> {
     'Pengeluaran Kos',
     'Tagihan Bulanan',
     'Catatan Keuangan',
+    'Kebutuhan Harian',
+    'Daftar Belanja',
+    'Pengingat Kegiatan',
   ];
 
   void _onItemTapped(int index) {
@@ -130,6 +139,12 @@ class _MainScreenState extends State<MainScreen> {
         return const Icon(Icons.receipt_long_outlined);
       case 6:
         return const Icon(Icons.sticky_note_2_outlined);
+      case 7:
+        return const Icon(Icons.check_circle_outline);
+      case 8:
+        return const Icon(Icons.shopping_cart_outlined);
+      case 9:
+        return const Icon(Icons.notifications_outlined);
       default:
         return const Icon(Icons.error);
     }

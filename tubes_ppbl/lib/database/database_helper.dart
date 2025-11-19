@@ -6,6 +6,9 @@ import '../models/laundry.dart';
 import '../models/expense.dart';
 import '../models/bill.dart';
 import '../models/finance_note.dart';
+import '../models/daily_need.dart';
+import '../models/shopping_list.dart';
+import '../models/activity_reminder.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -25,7 +28,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 3) {
@@ -41,6 +44,10 @@ class DatabaseHelper {
 
         if (oldVersion < 4) {
           await _createFinanceTables(db);
+        }
+
+        if (oldVersion < 5) {
+          await _createNewCRUDTables(db);
         }
       },
     );
@@ -77,6 +84,36 @@ class DatabaseHelper {
     ''');
 
     await _createFinanceTables(db);
+    await _createNewCRUDTables(db);
+  }
+
+  Future<void> _createNewCRUDTables(Database db) async {
+    // Tabel Kebutuhan Harian
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS kebutuhan_harian (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        quantity INTEGER NOT NULL
+      )
+    ''');
+
+    // Tabel Daftar Belanja
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS daftar_belanja (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item TEXT NOT NULL,
+        quantity INTEGER NOT NULL
+      )
+    ''');
+
+    // Tabel Pengingat Kegiatan
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS pengingat_kegiatan (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        time TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<void> _createFinanceTables(Database db) async {
@@ -336,6 +373,138 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete(
       'catatan_keuangan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD KEBUTUHAN HARIAN ==========
+  Future<int> insertDailyNeed(DailyNeed dailyNeed) async {
+    final db = await database;
+    return await db.insert('kebutuhan_harian', dailyNeed.toMap());
+  }
+
+  Future<List<DailyNeed>> getAllDailyNeeds() async {
+    final db = await database;
+    final result = await db.query('kebutuhan_harian', orderBy: 'name ASC');
+    return result.map((map) => DailyNeed.fromMap(map)).toList();
+  }
+
+  Future<DailyNeed?> getDailyNeedById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'kebutuhan_harian',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isNotEmpty) {
+      return DailyNeed.fromMap(result.first);
+    }
+    return null;
+  }
+
+  Future<int> updateDailyNeed(DailyNeed dailyNeed) async {
+    final db = await database;
+    return await db.update(
+      'kebutuhan_harian',
+      dailyNeed.toMap(),
+      where: 'id = ?',
+      whereArgs: [dailyNeed.id],
+    );
+  }
+
+  Future<int> deleteDailyNeed(int id) async {
+    final db = await database;
+    return await db.delete(
+      'kebutuhan_harian',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD DAFTAR BELANJA ==========
+  Future<int> insertShoppingList(ShoppingList shoppingList) async {
+    final db = await database;
+    return await db.insert('daftar_belanja', shoppingList.toMap());
+  }
+
+  Future<List<ShoppingList>> getAllShoppingLists() async {
+    final db = await database;
+    final result = await db.query('daftar_belanja', orderBy: 'item ASC');
+    return result.map((map) => ShoppingList.fromMap(map)).toList();
+  }
+
+  Future<ShoppingList?> getShoppingListById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'daftar_belanja',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isNotEmpty) {
+      return ShoppingList.fromMap(result.first);
+    }
+    return null;
+  }
+
+  Future<int> updateShoppingList(ShoppingList shoppingList) async {
+    final db = await database;
+    return await db.update(
+      'daftar_belanja',
+      shoppingList.toMap(),
+      where: 'id = ?',
+      whereArgs: [shoppingList.id],
+    );
+  }
+
+  Future<int> deleteShoppingList(int id) async {
+    final db = await database;
+    return await db.delete(
+      'daftar_belanja',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD PENGINGAT KEGIATAN ==========
+  Future<int> insertActivityReminder(ActivityReminder reminder) async {
+    final db = await database;
+    return await db.insert('pengingat_kegiatan', reminder.toMap());
+  }
+
+  Future<List<ActivityReminder>> getAllActivityReminders() async {
+    final db = await database;
+    final result = await db.query('pengingat_kegiatan', orderBy: 'time ASC');
+    return result.map((map) => ActivityReminder.fromMap(map)).toList();
+  }
+
+  Future<ActivityReminder?> getActivityReminderById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'pengingat_kegiatan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isNotEmpty) {
+      return ActivityReminder.fromMap(result.first);
+    }
+    return null;
+  }
+
+  Future<int> updateActivityReminder(ActivityReminder reminder) async {
+    final db = await database;
+    return await db.update(
+      'pengingat_kegiatan',
+      reminder.toMap(),
+      where: 'id = ?',
+      whereArgs: [reminder.id],
+    );
+  }
+
+  Future<int> deleteActivityReminder(int id) async {
+    final db = await database;
+    return await db.delete(
+      'pengingat_kegiatan',
       where: 'id = ?',
       whereArgs: [id],
     );
