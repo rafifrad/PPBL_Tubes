@@ -3,6 +3,9 @@ import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
 import 'screens/equipment_screen.dart';
 import 'screens/laundry_screen.dart';
+import 'screens/expense_screen.dart';
+import 'screens/bill_screen.dart';
+import 'screens/finance_note_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,13 +44,19 @@ class _MainScreenState extends State<MainScreen> {
     const FoodScreen(),
     const EquipmentScreen(),
     const LaundryScreen(),
+    const ExpenseScreen(),
+    const BillScreen(),
+    const FinanceNoteScreen(),
   ];
 
   final List<String> _titles = [
     'Home',
     'Persediaan Makanan', 
     'Peralatan Kamar',
-    'Laundry'
+    'Laundry',
+    'Pengeluaran Kos',
+    'Tagihan Bulanan',
+    'Catatan Keuangan',
   ];
 
   void _onItemTapped(int index) {
@@ -107,11 +116,22 @@ class _MainScreenState extends State<MainScreen> {
 
   Icon _getIcon(int index) {
     switch (index) {
-      case 0: return const Icon(Icons.home_outlined);
-      case 1: return const Icon(Icons.fastfood_outlined);
-      case 2: return const Icon(Icons.chair_alt_outlined);
-      case 3: return const Icon(Icons.local_laundry_service_outlined);
-      default: return const Icon(Icons.error);
+      case 0:
+        return const Icon(Icons.home_outlined);
+      case 1:
+        return const Icon(Icons.fastfood_outlined);
+      case 2:
+        return const Icon(Icons.chair_alt_outlined);
+      case 3:
+        return const Icon(Icons.local_laundry_service_outlined);
+      case 4:
+        return const Icon(Icons.payments_outlined);
+      case 5:
+        return const Icon(Icons.receipt_long_outlined);
+      case 6:
+        return const Icon(Icons.sticky_note_2_outlined);
+      default:
+        return const Icon(Icons.error);
     }
   }
 }

@@ -3,6 +3,9 @@ import 'package:path/path.dart';
 import '../models/food.dart';
 import '../models/equipment.dart';
 import '../models/laundry.dart';
+import '../models/expense.dart';
+import '../models/bill.dart';
+import '../models/finance_note.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -22,14 +25,22 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 3) {
           await db.execute('DROP TABLE IF EXISTS persediaan_makanan');
           await db.execute('DROP TABLE IF EXISTS peralatan_kamar');
           await db.execute('DROP TABLE IF EXISTS laundry');
+          await db.execute('DROP TABLE IF EXISTS pengeluaran_kos');
+          await db.execute('DROP TABLE IF EXISTS tagihan_bulanan');
+          await db.execute('DROP TABLE IF EXISTS catatan_keuangan');
           await _createDB(db, newVersion);
+          return;
+        }
+
+        if (oldVersion < 4) {
+          await _createFinanceTables(db);
         }
       },
     );
@@ -62,6 +73,36 @@ class DatabaseHelper {
         type TEXT NOT NULL,
         quantity INTEGER NOT NULL,
         status TEXT NOT NULL
+      )
+    ''');
+
+    await _createFinanceTables(db);
+  }
+
+  Future<void> _createFinanceTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS pengeluaran_kos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL,
+        date TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS tagihan_bulanan (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        dueDate TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catatan_keuangan (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        note TEXT NOT NULL,
+        amount REAL NOT NULL
       )
     ''');
   }
@@ -193,6 +234,108 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete(
       'laundry',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD PENGELUARAN KOS ==========
+  Future<int> insertExpense(Expense expense) async {
+    final db = await database;
+    return await db.insert('pengeluaran_kos', expense.toMap());
+  }
+
+  Future<List<Expense>> getAllExpenses() async {
+    final db = await database;
+    final result = await db.query(
+      'pengeluaran_kos',
+      orderBy: 'date DESC',
+    );
+    return result.map((map) => Expense.fromMap(map)).toList();
+  }
+
+  Future<int> updateExpense(Expense expense) async {
+    final db = await database;
+    return await db.update(
+      'pengeluaran_kos',
+      expense.toMap(),
+      where: 'id = ?',
+      whereArgs: [expense.id],
+    );
+  }
+
+  Future<int> deleteExpense(int id) async {
+    final db = await database;
+    return await db.delete(
+      'pengeluaran_kos',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD TAGIHAN BULANAN ==========
+  Future<int> insertBill(Bill bill) async {
+    final db = await database;
+    return await db.insert('tagihan_bulanan', bill.toMap());
+  }
+
+  Future<List<Bill>> getAllBills() async {
+    final db = await database;
+    final result = await db.query(
+      'tagihan_bulanan',
+      orderBy: 'dueDate ASC',
+    );
+    return result.map((map) => Bill.fromMap(map)).toList();
+  }
+
+  Future<int> updateBill(Bill bill) async {
+    final db = await database;
+    return await db.update(
+      'tagihan_bulanan',
+      bill.toMap(),
+      where: 'id = ?',
+      whereArgs: [bill.id],
+    );
+  }
+
+  Future<int> deleteBill(int id) async {
+    final db = await database;
+    return await db.delete(
+      'tagihan_bulanan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== CRUD CATATAN KEUANGAN KECIL ==========
+  Future<int> insertFinanceNote(FinanceNote note) async {
+    final db = await database;
+    return await db.insert('catatan_keuangan', note.toMap());
+  }
+
+  Future<List<FinanceNote>> getAllFinanceNotes() async {
+    final db = await database;
+    final result = await db.query(
+      'catatan_keuangan',
+      orderBy: 'id DESC',
+    );
+    return result.map((map) => FinanceNote.fromMap(map)).toList();
+  }
+
+  Future<int> updateFinanceNote(FinanceNote note) async {
+    final db = await database;
+    return await db.update(
+      'catatan_keuangan',
+      note.toMap(),
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
+  }
+
+  Future<int> deleteFinanceNote(int id) async {
+    final db = await database;
+    return await db.delete(
+      'catatan_keuangan',
       where: 'id = ?',
       whereArgs: [id],
     );
