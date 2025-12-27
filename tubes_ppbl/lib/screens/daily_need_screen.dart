@@ -1,7 +1,11 @@
+// Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import model DailyNeed (cetakan data kebutuhan harian)
 import '../models/daily_need.dart';
+// Import database helper untuk akses database
 import '../database/database_helper.dart';
 
+// Halaman Kebutuhan Harian - Mengelola daftar kebutuhan sehari-hari
 class DailyNeedScreen extends StatefulWidget {
   const DailyNeedScreen({super.key});
 
@@ -10,26 +14,36 @@ class DailyNeedScreen extends StatefulWidget {
 }
 
 class _DailyNeedScreenState extends State<DailyNeedScreen> {
+  // Instance database helper
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  
+  // List untuk menyimpan semua data kebutuhan harian
   List<DailyNeed> _dailyNeeds = [];
+  
+  // Status loading
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadDailyNeeds();
+    _loadDailyNeeds();  // Load data saat pertama kali buka halaman
   }
 
+  // Fungsi untuk mengambil semua data kebutuhan harian dari database
   Future<void> _loadDailyNeeds() async {
-    setState(() => _isLoading = true);
-    final dailyNeeds = await _dbHelper.getAllDailyNeeds();
+    setState(() => _isLoading = true);  // Tampilkan loading
+    
+    final dailyNeeds = await _dbHelper.getAllDailyNeeds();  // Ambil data dari database
+    
     setState(() {
-      _dailyNeeds = dailyNeeds;
-      _isLoading = false;
+      _dailyNeeds = dailyNeeds;  // Simpan data ke variable
+      _isLoading = false;        // Matikan loading
     });
   }
 
+  // Fungsi untuk menampilkan dialog tambah/edit kebutuhan harian
   Future<void> _showAddEditDialog({DailyNeed? dailyNeed}) async {
+    // Controller untuk input field
     final nameController = TextEditingController(text: dailyNeed?.name ?? '');
     final quantityController = TextEditingController(
       text: dailyNeed?.quantity.toString() ?? '',
@@ -38,11 +52,14 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        // Judul dialog (Tambah atau Edit)
         title: Text(dailyNeed == null ? 'Tambah Kebutuhan Harian' : 'Edit Kebutuhan Harian'),
+        
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Input Nama Kebutuhan
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
@@ -51,24 +68,31 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              
+              // Input Jumlah
               TextField(
                 controller: quantityController,
                 decoration: const InputDecoration(
                   labelText: 'Jumlah',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.number,  // Keyboard angka
               ),
             ],
           ),
         ),
+        
         actions: [
+          // Tombol Batal
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
+          
+          // Tombol Simpan
           ElevatedButton(
             onPressed: () async {
+              // Validasi: semua field harus diisi
               if (nameController.text.isEmpty ||
                   quantityController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -79,21 +103,25 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                 return;
               }
 
+              // Buat object DailyNeed
               final dailyNeedToSave = DailyNeed(
-                id: dailyNeed?.id,
+                id: dailyNeed?.id,  // ID (null untuk data baru)
                 name: nameController.text,
                 quantity: int.parse(quantityController.text),
               );
 
+              // Simpan ke database
               if (dailyNeed == null) {
-                await _dbHelper.insertDailyNeed(dailyNeedToSave);
+                await _dbHelper.insertDailyNeed(dailyNeedToSave);  // Tambah baru
               } else {
-                await _dbHelper.updateDailyNeed(dailyNeedToSave);
+                await _dbHelper.updateDailyNeed(dailyNeedToSave);  // Update
               }
 
               if (mounted) {
-                Navigator.pop(context);
-                _loadDailyNeeds();
+                Navigator.pop(context);  // Tutup dialog
+                _loadDailyNeeds();       // Refresh data
+                
+                // Tampilkan notifikasi sukses
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -112,7 +140,9 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
     );
   }
 
+  // Fungsi untuk menghapus kebutuhan harian
   Future<void> _deleteDailyNeed(DailyNeed dailyNeed) async {
+    // Tampilkan dialog konfirmasi
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -132,9 +162,11 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
       ),
     );
 
+    // Kalau user klik "Hapus"
     if (confirm == true) {
-      await _dbHelper.deleteDailyNeed(dailyNeed.id!);
-      _loadDailyNeeds();
+      await _dbHelper.deleteDailyNeed(dailyNeed.id!);  // Hapus dari database
+      _loadDailyNeeds();  // Refresh data
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Kebutuhan harian dihapus')),
@@ -147,7 +179,10 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isLoading
+          // Kalau loading, tampilkan loading indicator
           ? const Center(child: CircularProgressIndicator())
+          
+          // Kalau data kosong, tampilkan pesan kosong
           : _dailyNeeds.isEmpty
               ? Center(
                   child: Column(
@@ -162,30 +197,43 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                     ],
                   ),
                 )
+              
+              // Kalau ada data, tampilkan list
               : ListView.builder(
                   padding: const EdgeInsets.all(8),
                   itemCount: _dailyNeeds.length,
                   itemBuilder: (context, index) {
                     final dailyNeed = _dailyNeeds[index];
+                    
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
+                        // Icon di kiri
                         leading: CircleAvatar(
                           backgroundColor: Colors.orange[100],
                           child: const Icon(Icons.check_circle, color: Colors.orange),
                         ),
+                        
+                        // Nama kebutuhan
                         title: Text(
                           dailyNeed.name,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        
+                        // Jumlah
                         subtitle: Text('Jumlah: ${dailyNeed.quantity}'),
+                        
+                        // Tombol Edit & Hapus di kanan
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Tombol Edit
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () => _showAddEditDialog(dailyNeed: dailyNeed),
                             ),
+                            
+                            // Tombol Hapus
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () => _deleteDailyNeed(dailyNeed),
@@ -196,6 +244,8 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                     );
                   },
                 ),
+      
+      // Tombol tambah di kanan bawah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
         backgroundColor: Colors.orange,
@@ -204,4 +254,3 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
     );
   }
 }
-

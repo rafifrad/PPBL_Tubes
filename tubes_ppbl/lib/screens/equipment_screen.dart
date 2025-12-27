@@ -1,7 +1,11 @@
+// Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import model Equipment (cetakan data peralatan)
 import '../models/equipment.dart';
+// Import database helper untuk akses database
 import '../database/database_helper.dart';
 
+// Halaman Peralatan Kamar - Mengelola barang-barang di kamar kost
 class EquipmentScreen extends StatefulWidget {
   const EquipmentScreen({super.key});
 
@@ -10,23 +14,33 @@ class EquipmentScreen extends StatefulWidget {
 }
 
 class _EquipmentScreenState extends State<EquipmentScreen> {
+  // Instance database helper
   final _db = DatabaseHelper.instance;
+  
+  // List untuk menyimpan semua data peralatan
   List<Equipment> _items = [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _load();  // Load data saat pertama kali buka halaman
   }
 
+  // Fungsi untuk mengambil semua data peralatan dari database
   Future _load() async {
-    final list = await _db.getAllEquipments();
-    setState(() => _items = list);
+    final list = await _db.getAllEquipments();  // Ambil data dari database
+    setState(() => _items = list);  // Simpan ke variable dan update UI
   }
 
+  // Fungsi untuk menampilkan dialog tambah/edit peralatan
   Future _showForm({Equipment? edit}) async {
+    // Controller untuk input nama
     final nameCtrl = TextEditingController(text: edit?.name ?? '');
+    
+    // Kondisi yang dipilih (default: "Baik" atau kondisi dari edit)
     String condition = edit?.condition ?? 'Baik';
+    
+    // List pilihan kondisi
     final conditions = [
       'Baik',
       'Rusak Ringan',
@@ -36,110 +50,127 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
 
     await showDialog(
       context: context,
-      builder:
-          (_) => StatefulBuilder(
-            builder:
-                (context, setState) => AlertDialog(
-                  title: Text(
-                    edit == null ? 'Tambah Peralatan' : 'Edit Peralatan',
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: nameCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama Barang',
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: condition,
-                        decoration: const InputDecoration(labelText: 'Kondisi'),
-                        items:
-                            conditions
-                                .map(
-                                  (c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(c),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (v) => setState(() => condition = v!),
-                      ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Batal'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final name = nameCtrl.text.trim();
-                        if (name.isEmpty) return;
-                        final data = Equipment(
-                          id: edit?.id,
-                          name: name,
-                          condition: condition,
-                        );
-                        if (edit == null) {
-                          await _db.insertEquipment(data);
-                        } else {
-                          await _db.updateEquipment(data);
-                        }
-                        if (mounted) {
-                          Navigator.pop(context);
-                          await _load();
-                        }
-                      },
-                      child: const Text('Simpan'),
-                    ),
-                  ],
-                ),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          // Judul dialog (Tambah atau Edit)
+          title: Text(
+            edit == null ? 'Tambah Peralatan' : 'Edit Peralatan',
           ),
-    );
-  }
-
-  Future _delete(Equipment item) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Hapus'),
-            content: Text('Yakin hapus ${item.name}?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Batal'),
+          
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Input Nama Barang
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Barang',
+                ),
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Hapus'),
+              const SizedBox(height: 16),
+              
+              // Dropdown Kondisi
+              DropdownButtonFormField<String>(
+                value: condition,
+                decoration: const InputDecoration(labelText: 'Kondisi'),
+                items: conditions
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c,
+                        child: Text(c),
+                      ),
+                    )
+                    .toList(),
+                // Update kondisi saat user pilih
+                onChanged: (v) => setState(() => condition = v!),
               ),
             ],
           ),
+          
+          actions: [
+            // Tombol Batal
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            
+            // Tombol Simpan
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameCtrl.text.trim();
+                
+                // Validasi: nama harus diisi
+                if (name.isEmpty) return;
+                
+                // Buat object Equipment
+                final data = Equipment(
+                  id: edit?.id,  // ID (null untuk data baru)
+                  name: name,
+                  condition: condition,
+                );
+                
+                // Simpan ke database
+                if (edit == null) {
+                  await _db.insertEquipment(data);  // Tambah baru
+                } else {
+                  await _db.updateEquipment(data);  // Update
+                }
+                
+                if (mounted) {
+                  Navigator.pop(context);  // Tutup dialog
+                  await _load();           // Refresh data
+                }
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Fungsi untuk menghapus peralatan
+  Future _delete(Equipment item) async {
+    // Tampilkan dialog konfirmasi
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Hapus'),
+        content: Text('Yakin hapus ${item.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
 
+    // Kalau user klik "Hapus"
     if (confirm == true) {
-      await _db.deleteEquipment(item.id!);
-      await _load();
+      await _db.deleteEquipment(item.id!);  // Hapus dari database
+      await _load();  // Refresh data
     }
   }
 
+  // Fungsi untuk menentukan warna berdasarkan kondisi
   Color _getColor(String condition) {
     switch (condition) {
       case 'Baik':
-        return Colors.green;
+        return Colors.green;      // Hijau untuk kondisi baik
       case 'Rusak Ringan':
-        return Colors.orange;
+        return Colors.orange;     // Orange untuk rusak ringan
       case 'Rusak Berat':
-        return Colors.red;
+        return Colors.red;        // Merah untuk rusak berat
       case 'Perlu Perbaikan':
-        return Colors.amber;
+        return Colors.amber;      // Kuning untuk perlu perbaikan
       default:
-        return Colors.grey;
+        return Colors.grey;       // Abu-abu untuk kondisi lain
     }
   }
 
@@ -147,6 +178,7 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body:
+          // Kalau data kosong, tampilkan pesan kosong
           _items.isEmpty
               ? Center(
                 child: Column(
@@ -161,27 +193,33 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
                   ],
                 ),
               )
+              
+              // Kalau ada data, tampilkan list
               : ListView.builder(
                 padding: const EdgeInsets.all(8),
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
+                  
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
+                      // Icon di kiri dengan warna sesuai kondisi
                       leading: CircleAvatar(
-                        backgroundColor: _getColor(
-                          item.condition,
-                        ).withOpacity(0.2),
+                        backgroundColor: _getColor(item.condition).withOpacity(0.2),
                         child: Icon(
                           Icons.chair_alt,
                           color: _getColor(item.condition),
                         ),
                       ),
+                      
+                      // Nama barang
                       title: Text(
                         item.name,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      
+                      // Badge kondisi dengan warna
                       subtitle: Container(
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.symmetric(
@@ -201,13 +239,18 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
                           ),
                         ),
                       ),
+                      
+                      // Tombol Edit & Hapus di kanan
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Tombol Edit
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () => _showForm(edit: item),
                           ),
+                          
+                          // Tombol Hapus
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _delete(item),
@@ -218,6 +261,8 @@ class _EquipmentScreenState extends State<EquipmentScreen> {
                   );
                 },
               ),
+      
+      // Tombol tambah di kanan bawah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showForm(),
         child: const Icon(Icons.add),

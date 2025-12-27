@@ -1,7 +1,11 @@
+// Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import model Food (cetakan data makanan)
 import '../models/food.dart';
+// Import database helper untuk akses database
 import '../database/database_helper.dart';
 
+// Halaman Persediaan Makanan - Mengelola stok makanan di kost
 class FoodScreen extends StatefulWidget {
   const FoodScreen({super.key});
 
@@ -10,163 +14,193 @@ class FoodScreen extends StatefulWidget {
 }
 
 class _FoodScreenState extends State<FoodScreen> {
+  // Instance database helper
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  
+  // List untuk menyimpan semua data makanan
   List<Food> _foods = [];
+  
+  // Status loading
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadFoods();
+    _loadFoods();  // Load data saat pertama kali buka halaman
   }
 
+  // Fungsi untuk mengambil semua data makanan dari database
   Future<void> _loadFoods() async {
-    setState(() => _isLoading = true);
-    final foods = await _dbHelper.getAllFoods();
+    setState(() => _isLoading = true);  // Tampilkan loading
+    
+    final foods = await _dbHelper.getAllFoods();  // Ambil data dari database
+    
     setState(() {
-      _foods = foods;
-      _isLoading = false;
+      _foods = foods;        // Simpan data ke variable
+      _isLoading = false;    // Matikan loading
     });
   }
 
+  // Fungsi untuk menampilkan dialog tambah/edit makanan
   Future<void> _showAddEditDialog({Food? food}) async {
+    // Controller untuk input field
     final nameController = TextEditingController(text: food?.name ?? '');
     final quantityController = TextEditingController(
       text: food?.quantity.toString() ?? '',
     );
+    
+    // Tanggal yang dipilih (default: hari ini atau tanggal dari food)
     DateTime selectedDate =
         food != null ? DateTime.parse(food.purchaseDate) : DateTime.now();
 
     await showDialog(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setDialogState) => AlertDialog(
-                  title: Text(food == null ? 'Tambah Makanan' : 'Edit Makanan'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nama Makanan',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: quantityController,
-                          decoration: const InputDecoration(
-                            labelText: 'Jumlah',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 16),
-                        ListTile(
-                          title: const Text('Tanggal Beli'),
-                          subtitle: Text(
-                            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                          ),
-                          trailing: const Icon(Icons.calendar_today),
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDate,
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null) {
-                              setDialogState(() => selectedDate = picked);
-                            }
-                          },
-                        ),
-                      ],
-                    ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          // Judul dialog (Tambah atau Edit)
+          title: Text(food == null ? 'Tambah Makanan' : 'Edit Makanan'),
+          
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Input Nama Makanan
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Makanan',
+                    border: OutlineInputBorder(),
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Batal'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (nameController.text.isEmpty ||
-                            quantityController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Harap isi semua field'),
-                            ),
-                          );
-                          return;
-                        }
-
-                        final foodToSave = Food(
-                          id: food?.id,
-                          name: nameController.text,
-                          quantity: int.parse(quantityController.text),
-                          purchaseDate:
-                              selectedDate.toIso8601String().split('T')[0],
-                        );
-
-                        if (food == null) {
-                          await _dbHelper.insertFood(foodToSave);
-                        } else {
-                          await _dbHelper.updateFood(foodToSave);
-                        }
-
-                        if (mounted) {
-                          Navigator.pop(context);
-                          _loadFoods();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                food == null
-                                    ? 'Makanan ditambahkan'
-                                    : 'Makanan diupdate',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text('Simpan'),
-                    ),
-                  ],
                 ),
+                const SizedBox(height: 16),
+                
+                // Input Jumlah
+                TextField(
+                  controller: quantityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,  // Keyboard angka
+                ),
+                const SizedBox(height: 16),
+                
+                // Pilih Tanggal Beli
+                ListTile(
+                  title: const Text('Tanggal Beli'),
+                  subtitle: Text(
+                    '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                  ),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    // Tampilkan date picker
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),  // Maksimal hari ini
+                    );
+                    
+                    if (picked != null) {
+                      setDialogState(() => selectedDate = picked);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
+          
+          actions: [
+            // Tombol Batal
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            
+            // Tombol Simpan
+            ElevatedButton(
+              onPressed: () async {
+                // Validasi: semua field harus diisi
+                if (nameController.text.isEmpty ||
+                    quantityController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Harap isi semua field'),
+                    ),
+                  );
+                  return;
+                }
+
+                // Buat object Food
+                final foodToSave = Food(
+                  id: food?.id,  // ID (null untuk data baru)
+                  name: nameController.text,
+                  quantity: int.parse(quantityController.text),
+                  purchaseDate: selectedDate.toIso8601String().split('T')[0],
+                );
+
+                // Simpan ke database
+                if (food == null) {
+                  await _dbHelper.insertFood(foodToSave);  // Tambah baru
+                } else {
+                  await _dbHelper.updateFood(foodToSave);  // Update
+                }
+
+                if (mounted) {
+                  Navigator.pop(context);  // Tutup dialog
+                  _loadFoods();            // Refresh data
+                  
+                  // Tampilkan notifikasi sukses
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        food == null
+                            ? 'Makanan ditambahkan'
+                            : 'Makanan diupdate',
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
+  // Fungsi untuk menghapus makanan
   Future<void> _deleteFood(Food food) async {
+    // Tampilkan dialog konfirmasi
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Hapus Makanan'),
-            content: Text('Yakin hapus ${food.name}?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Hapus'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Makanan'),
+        content: Text('Yakin hapus ${food.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
 
+    // Kalau user klik "Hapus"
     if (confirm == true) {
-      await _dbHelper.deleteFood(food.id!);
-      _loadFoods();
+      await _dbHelper.deleteFood(food.id!);  // Hapus dari database
+      _loadFoods();  // Refresh data
+      
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Makanan dihapus')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Makanan dihapus')),
+        );
       }
     }
   }
@@ -175,8 +209,11 @@ class _FoodScreenState extends State<FoodScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body:
+          // Kalau loading, tampilkan loading indicator
           _isLoading
               ? const Center(child: CircularProgressIndicator())
+              
+              // Kalau data kosong, tampilkan pesan kosong
               : _foods.isEmpty
               ? Center(
                 child: Column(
@@ -191,22 +228,30 @@ class _FoodScreenState extends State<FoodScreen> {
                   ],
                 ),
               )
+              
+              // Kalau ada data, tampilkan list
               : ListView.builder(
                 padding: const EdgeInsets.all(8),
                 itemCount: _foods.length,
                 itemBuilder: (context, index) {
                   final food = _foods[index];
+                  
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     child: ListTile(
+                      // Icon di kiri
                       leading: CircleAvatar(
                         backgroundColor: Colors.green[100],
                         child: const Icon(Icons.fastfood, color: Colors.green),
                       ),
+                      
+                      // Nama makanan
                       title: Text(
                         food.name,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      
+                      // Detail (jumlah & tanggal)
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -214,13 +259,18 @@ class _FoodScreenState extends State<FoodScreen> {
                           Text('Tanggal Beli: ${food.purchaseDate}'),
                         ],
                       ),
+                      
+                      // Tombol Edit & Hapus di kanan
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Tombol Edit
                           IconButton(
                             icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () => _showAddEditDialog(food: food),
                           ),
+                          
+                          // Tombol Hapus
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.red),
                             onPressed: () => _deleteFood(food),
@@ -231,6 +281,8 @@ class _FoodScreenState extends State<FoodScreen> {
                   );
                 },
               ),
+      
+      // Tombol tambah di kanan bawah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
         backgroundColor: Colors.green,

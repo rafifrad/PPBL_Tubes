@@ -1,16 +1,16 @@
-// Model untuk data Pengeluaran Kos
-// Menyimpan informasi tentang pengeluaran sehari-hari
+// Model untuk data Pemasukan
+// Menyimpan informasi tentang pemasukan (uang masuk)
 
-class Expense {
-  // Field/properti yang dimiliki setiap pengeluaran
+class Income {
+  // Field/properti yang dimiliki setiap pemasukan
   final int? id;              // ID unik (auto-generated oleh database)
-  final double amount;        // Nominal pengeluaran (contoh: 25000.0)
-  final String category;      // Kategori (contoh: "Makan", "Transport", "Hiburan")
-  final String description;   // Deskripsi detail (contoh: "Warteg depan kampus")
-  final String date;          // Tanggal pengeluaran (format ISO-8601: "2025-12-27")
+  final double amount;        // Nominal pemasukan (contoh: 2000000.0)
+  final String category;      // Kategori (contoh: "Gaji", "Uang Bulanan", "Freelance")
+  final String description;   // Deskripsi detail (contoh: "Gaji bulan Desember")
+  final String date;          // Tanggal pemasukan (format ISO-8601: "2025-12-27")
 
-  // Constructor - cara membuat object Expense baru
-  Expense({
+  // Constructor - cara membuat object Income baru
+  Income({
     this.id,                      // ID opsional
     required this.amount,         // Nominal wajib diisi
     required this.category,       // Kategori wajib diisi
@@ -18,7 +18,7 @@ class Expense {
     required this.date,           // Tanggal wajib diisi
   });
 
-  // Method untuk mengubah object Expense jadi Map (untuk disimpan ke database)
+  // Method untuk mengubah object Income jadi Map (untuk disimpan ke database)
   Map<String, dynamic> toMap() => {
         'id': id,                   // Masukkan ID
         'amount': amount,           // Masukkan nominal
@@ -27,8 +27,8 @@ class Expense {
         'date': date,               // Masukkan tanggal
       };
 
-  // Factory method untuk membuat object Expense dari Map (data dari database)
-  factory Expense.fromMap(Map<String, dynamic> map) => Expense(
+  // Factory method untuk membuat object Income dari Map (data dari database)
+  factory Income.fromMap(Map<String, dynamic> map) => Income(
         id: map['id'] as int?,                      // Ambil ID
         amount: (map['amount'] as num).toDouble(),  // Ambil nominal (convert ke double)
         category: map['category'] as String,        // Ambil kategori

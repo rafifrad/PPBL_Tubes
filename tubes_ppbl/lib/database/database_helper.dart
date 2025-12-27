@@ -9,6 +9,7 @@ import '../models/finance_note.dart';
 import '../models/daily_need.dart';
 import '../models/shopping_list.dart';
 import '../models/activity_reminder.dart';
+import '../models/income.dart';  // Import model Income
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -28,7 +29,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 7,  // Update version untuk income table
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 3) {
@@ -48,6 +49,24 @@ class DatabaseHelper {
 
         if (oldVersion < 5) {
           await _createNewCRUDTables(db);
+        }
+
+        if (oldVersion < 6) {
+          // Add description column to expenses table
+          await db.execute('ALTER TABLE pengeluaran_kos ADD COLUMN description TEXT DEFAULT ""');
+        }
+
+        if (oldVersion < 7) {
+          // Add income table (pemasukan)
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS pemasukan (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              amount REAL NOT NULL,
+              category TEXT NOT NULL,
+              description TEXT DEFAULT '',
+              date TEXT NOT NULL
+            )
+          ''');
         }
       },
     );
@@ -122,6 +141,7 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         amount REAL NOT NULL,
         category TEXT NOT NULL,
+        description TEXT DEFAULT '',
         date TEXT NOT NULL
       )
     ''');
@@ -140,6 +160,17 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         note TEXT NOT NULL,
         amount REAL NOT NULL
+      )
+    ''');
+
+    // Tabel Pemasukan (Income)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS pemasukan (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        date TEXT NOT NULL
       )
     ''');
   }
@@ -509,6 +540,59 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
+  // ========== CRUD PEMASUKAN (INCOME) ==========
+  // Insert pemasukan baru ke database
+  Future<int> insertIncome(Income income) async {
+    final db = await database;
+    return await db.insert('pemasukan', income.toMap());
+  }
+
+  // Ambil semua pemasukan, diurutkan dari terbaru
+  Future<List<Income>> getAllIncomes() async {
+    final db = await database;
+    final result = await db.query(
+      'pemasukan',
+      orderBy: 'date DESC, id DESC',  // Urutkan dari tanggal terbaru
+    );
+    return result.map((map) => Income.fromMap(map)).toList();
+  }
+
+  // Ambil pemasukan berdasarkan ID
+  Future<Income?> getIncomeById(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'pemasukan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (result.isNotEmpty) {
+      return Income.fromMap(result.first);
+    }
+    return null;
+  }
+
+  // Update pemasukan yang sudah ada
+  Future<int> updateIncome(Income income) async {
+    final db = await database;
+    return await db.update(
+      'pemasukan',
+      income.toMap(),
+      where: 'id = ?',
+      whereArgs: [income.id],
+    );
+  }
+
+  // Hapus pemasukan berdasarkan ID
+  Future<int> deleteIncome(int id) async {
+    final db = await database;
+    return await db.delete(
+      'pemasukan',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
 
   Future<void> close() async {
     final db = await database;

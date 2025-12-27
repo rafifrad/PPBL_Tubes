@@ -1,59 +1,61 @@
+// Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import database helper untuk akses database
 import '../database/database_helper.dart';
-import '../models/expense.dart';
+// Import model Income (cetakan data pemasukan)
+import '../models/income.dart';
 
-// Halaman untuk menampilkan daftar pengeluaran
-class ExpenseScreen extends StatefulWidget {
-  const ExpenseScreen({super.key});
+// Halaman Pemasukan - Mengelola tracking pemasukan (uang masuk)
+class IncomeScreen extends StatefulWidget {
+  const IncomeScreen({super.key});
 
   @override
-  State<ExpenseScreen> createState() => _ExpenseScreenState();
+  State<IncomeScreen> createState() => _IncomeScreenState();
 }
 
-class _ExpenseScreenState extends State<ExpenseScreen> {
-  // Database helper untuk akses database
+class _IncomeScreenState extends State<IncomeScreen> {
+  // Instance database helper
   final _db = DatabaseHelper.instance;
   
-  // List untuk menyimpan semua data pengeluaran
-  List<Expense> _expenses = [];
+  // List untuk menyimpan semua data pemasukan
+  List<Income> _incomes = [];
   
-  // Status loading (true = sedang loading, false = selesai)
+  // Status loading
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    // Panggil fungsi untuk load data saat pertama kali buka halaman
-    _loadExpenses();
+    _loadIncomes();  // Load data saat pertama kali buka halaman
   }
 
-  // Fungsi untuk mengambil semua data pengeluaran dari database
-  Future<void> _loadExpenses() async {
-    setState(() => _loading = true); // Tampilkan loading
+  // Fungsi untuk mengambil semua data pemasukan dari database
+  Future<void> _loadIncomes() async {
+    setState(() => _loading = true);  // Tampilkan loading
     
-    final data = await _db.getAllExpenses(); // Ambil data dari database
+    final data = await _db.getAllIncomes();  // Ambil data dari database
     
     setState(() {
-      _expenses = data; // Simpan data ke variable
-      _loading = false; // Matikan loading
+      _incomes = data;     // Simpan data ke variable
+      _loading = false;    // Matikan loading
     });
   }
 
-  // Fungsi untuk mengelompokkan pengeluaran berdasarkan tanggal
-  // Hasilnya: {"2025-12-27": [expense1, expense2], "2025-12-26": [expense3]}
-  Map<String, List<Expense>> _groupByDate() {
-    Map<String, List<Expense>> grouped = {};
+  // Fungsi untuk mengelompokkan pemasukan berdasarkan tanggal
+  // Hasilnya: {"2025-12-27": [income1, income2], "2025-12-26": [income3]}
+  Map<String, List<Income>> _groupByDate() {
+    Map<String, List<Income>> grouped = {};
     
-    for (var expense in _expenses) {
-      String date = expense.date; // Ambil tanggal
+    for (var income in _incomes) {
+      String date = income.date;  // Ambil tanggal
       
       // Kalau tanggal belum ada di map, buat list baru
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
       }
       
-      // Tambahkan expense ke list tanggal tersebut
-      grouped[date]!.add(expense);
+      // Tambahkan income ke list tanggal tersebut
+      grouped[date]!.add(income);
     }
     
     return grouped;
@@ -61,8 +63,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   // Fungsi untuk format tanggal jadi "Hari Ini", "Kemarin", atau tanggal lengkap
   String _formatDate(String dateString) {
-    DateTime date = DateTime.parse(dateString); // Parse string jadi DateTime
-    DateTime now = DateTime.now(); // Tanggal hari ini
+    DateTime date = DateTime.parse(dateString);  // Parse string jadi DateTime
+    DateTime now = DateTime.now();  // Tanggal hari ini
     
     // Hitung selisih hari
     int difference = now.difference(date).inDays;
@@ -81,7 +83,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
   }
 
-  // Fungsi untuk format angka jadi format rupiah (contoh: 25000 -> 25.000)
+  // Fungsi untuk format angka jadi format rupiah (contoh: 2000000 -> 2.000.000)
   String _formatRupiah(double amount) {
     String str = amount.toInt().toString();
     String result = '';
@@ -100,22 +102,22 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     return result;
   }
 
-  // Fungsi untuk menampilkan dialog tambah/edit pengeluaran
-  Future<void> _showExpenseDialog({Expense? expense}) async {
+  // Fungsi untuk menampilkan dialog tambah/edit pemasukan
+  Future<void> _showIncomeDialog({Income? income}) async {
     // Controller untuk input field
     final nominalCtrl = TextEditingController(
-      text: expense?.amount.toString() ?? '',
+      text: income?.amount.toString() ?? '',
     );
     final categoryCtrl = TextEditingController(
-      text: expense?.category ?? '',
+      text: income?.category ?? '',
     );
     final descriptionCtrl = TextEditingController(
-      text: expense?.description ?? '',
+      text: income?.description ?? '',
     );
     
-    // Tanggal yang dipilih (default: hari ini atau tanggal dari expense)
-    DateTime selectedDate = expense != null 
-        ? DateTime.parse(expense.date) 
+    // Tanggal yang dipilih (default: hari ini atau tanggal dari income)
+    DateTime selectedDate = income != null 
+        ? DateTime.parse(income.date) 
         : DateTime.now();
 
     await showDialog(
@@ -124,7 +126,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text(expense == null ? 'Tambah Pengeluaran' : 'Edit Pengeluaran'),
+              // Judul dialog (Tambah atau Edit)
+              title: Text(income == null ? 'Tambah Pemasukan' : 'Edit Pemasukan'),
+              
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -137,7 +141,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         prefixText: 'Rp ',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.number,  // Keyboard angka
                     ),
                     const SizedBox(height: 12),
                     
@@ -146,7 +150,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       controller: categoryCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Kategori',
-                        hintText: 'Contoh: Makan, Transport',
+                        hintText: 'Contoh: Gaji, Uang Bulanan, Freelance',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -157,7 +161,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       controller: descriptionCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Deskripsi (opsional)',
-                        hintText: 'Contoh: Warteg depan kampus',
+                        hintText: 'Contoh: Gaji bulan Desember',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
@@ -189,6 +193,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   ],
                 ),
               ),
+              
               actions: [
                 // Tombol Batal
                 TextButton(
@@ -207,9 +212,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       return;
                     }
 
-                    // Buat object Expense baru
-                    final expenseData = Expense(
-                      id: expense?.id,
+                    // Buat object Income baru
+                    final incomeData = Income(
+                      id: income?.id,
                       amount: double.tryParse(nominalCtrl.text) ?? 0,
                       category: categoryCtrl.text.trim(),
                       description: descriptionCtrl.text.trim(),
@@ -217,21 +222,21 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     );
 
                     // Simpan ke database
-                    if (expense == null) {
-                      await _db.insertExpense(expenseData); // Tambah baru
+                    if (income == null) {
+                      await _db.insertIncome(incomeData);  // Tambah baru
                     } else {
-                      await _db.updateExpense(expenseData); // Update yang lama
+                      await _db.updateIncome(incomeData);  // Update yang lama
                     }
 
                     if (!mounted) return;
-                    Navigator.pop(context); // Tutup dialog
-                    _loadExpenses(); // Refresh data
+                    Navigator.pop(context);  // Tutup dialog
+                    _loadIncomes();  // Refresh data
                     
                     // Tampilkan notifikasi sukses
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          expense == null ? 'Pengeluaran ditambahkan' : 'Pengeluaran diperbarui',
+                          income == null ? 'Pemasukan ditambahkan' : 'Pemasukan diperbarui',
                         ),
                       ),
                     );
@@ -246,14 +251,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     );
   }
 
-  // Fungsi untuk hapus pengeluaran
-  Future<void> _deleteExpense(Expense expense) async {
+  // Fungsi untuk hapus pemasukan
+  Future<void> _deleteIncome(Income income) async {
     // Tampilkan dialog konfirmasi
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Pengeluaran'),
-        content: Text('Yakin hapus pengeluaran ${expense.category}?'),
+        title: const Text('Hapus Pemasukan'),
+        content: Text('Yakin hapus pemasukan ${income.category}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -270,12 +275,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
     // Kalau user klik "Hapus"
     if (confirm == true) {
-      await _db.deleteExpense(expense.id!); // Hapus dari database
-      _loadExpenses(); // Refresh data
+      await _db.deleteIncome(income.id!);  // Hapus dari database
+      _loadIncomes();  // Refresh data
       
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pengeluaran dihapus')),
+        const SnackBar(content: Text('Pemasukan dihapus')),
       );
     }
   }
@@ -288,15 +293,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
 
     // Kalau data kosong, tampilkan pesan kosong
-    if (_expenses.isEmpty) {
+    if (_incomes.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[300]),
+            Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
-              'Belum ada catatan pengeluaran',
+              'Belum ada catatan pemasukan',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ],
@@ -305,10 +310,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     }
 
     // Kelompokkan data berdasarkan tanggal
-    final groupedExpenses = _groupByDate();
+    final groupedIncomes = _groupByDate();
     
     // Urutkan tanggal dari terbaru ke terlama
-    final sortedDates = groupedExpenses.keys.toList()
+    final sortedDates = groupedIncomes.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
     // Tampilkan list
@@ -318,12 +323,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         itemCount: sortedDates.length,
         itemBuilder: (context, index) {
           String date = sortedDates[index];
-          List<Expense> expenses = groupedExpenses[date]!;
+          List<Income> incomes = groupedIncomes[date]!;
           
-          // Hitung total pengeluaran untuk tanggal ini
+          // Hitung total pemasukan untuk tanggal ini
           double total = 0;
-          for (var expense in expenses) {
-            total += expense.amount;
+          for (var income in incomes) {
+            total += income.amount;
           }
 
           return Column(
@@ -332,7 +337,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               // HEADER TANGGAL
               Container(
                 padding: const EdgeInsets.all(12),
-                color: Colors.grey[200],
+                color: Colors.green[50],  // Warna hijau untuk income
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -345,51 +350,51 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       ),
                     ),
                     
-                    // Total pengeluaran hari ini
+                    // Total pemasukan hari ini
                     Text(
                       'Total: Rp ${_formatRupiah(total)}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                        color: Colors.green,  // Hijau untuk income
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // LIST PENGELUARAN
-              ...expenses.map((expense) {
+              // LIST PEMASUKAN
+              ...incomes.map((income) {
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: ListTile(
-                    // Icon di kiri
+                    // Icon di kiri (hijau untuk income)
                     leading: CircleAvatar(
-                      backgroundColor: Colors.blue[100],
-                      child: const Icon(Icons.payments, color: Colors.blue),
+                      backgroundColor: Colors.green[100],
+                      child: const Icon(Icons.account_balance_wallet, color: Colors.green),
                     ),
                     
                     // Konten utama
                     title: Text(
-                      expense.category,
+                      income.category,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     
                     // Deskripsi (kalau ada)
-                    subtitle: expense.description.isNotEmpty
-                        ? Text(expense.description)
+                    subtitle: income.description.isNotEmpty
+                        ? Text(income.description)
                         : null,
                     
                     // Nominal di kanan
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tampilkan nominal
+                        // Tampilkan nominal (hijau untuk income)
                         Text(
-                          '-Rp ${_formatRupiah(expense.amount)}',
+                          '+Rp ${_formatRupiah(income.amount)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: Colors.green,  // Hijau untuk income
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -397,13 +402,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         // Tombol Edit
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                          onPressed: () => _showExpenseDialog(expense: expense),
+                          onPressed: () => _showIncomeDialog(income: income),
                         ),
                         
                         // Tombol Hapus
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                          onPressed: () => _deleteExpense(expense),
+                          onPressed: () => _deleteIncome(income),
                         ),
                       ],
                     ),
@@ -417,9 +422,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         },
       ),
       
-      // Tombol tambah di kanan bawah
+      // Tombol tambah di kanan bawah (hijau untuk income)
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showExpenseDialog(),
+        onPressed: () => _showIncomeDialog(),
+        backgroundColor: Colors.green,
         child: const Icon(Icons.add),
       ),
     );

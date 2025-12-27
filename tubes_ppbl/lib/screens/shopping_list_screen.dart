@@ -1,7 +1,11 @@
+// Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+// Import model ShoppingList (cetakan data daftar belanja)
 import '../models/shopping_list.dart';
+// Import database helper untuk akses database
 import '../database/database_helper.dart';
 
+// Halaman Daftar Belanja - Mengelola daftar barang yang perlu dibeli
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
 
@@ -10,26 +14,36 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
+  // Instance database helper
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  
+  // List untuk menyimpan semua data daftar belanja
   List<ShoppingList> _shoppingList = [];
+  
+  // Status loading
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadShoppingList();
+    _loadShoppingList();  // Load data saat pertama kali buka halaman
   }
 
+  // Fungsi untuk mengambil semua data daftar belanja dari database
   Future<void> _loadShoppingList() async {
-    setState(() => _isLoading = true);
-    final shoppingList = await _dbHelper.getAllShoppingLists();
+    setState(() => _isLoading = true);  // Tampilkan loading
+    
+    final shoppingList = await _dbHelper.getAllShoppingLists();  // Ambil data dari database
+    
     setState(() {
-      _shoppingList = shoppingList;
-      _isLoading = false;
+      _shoppingList = shoppingList;  // Simpan data ke variable
+      _isLoading = false;            // Matikan loading
     });
   }
 
+  // Fungsi untuk menampilkan dialog tambah/edit daftar belanja
   Future<void> _showAddEditDialog({ShoppingList? shoppingItem}) async {
+    // Controller untuk input field
     final itemController = TextEditingController(text: shoppingItem?.item ?? '');
     final quantityController = TextEditingController(
       text: shoppingItem?.quantity.toString() ?? '',
@@ -38,11 +52,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        // Judul dialog (Tambah atau Edit)
         title: Text(shoppingItem == null ? 'Tambah Daftar Belanja' : 'Edit Daftar Belanja'),
+        
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Input Nama Barang
               TextField(
                 controller: itemController,
                 decoration: const InputDecoration(
@@ -51,24 +68,31 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              
+              // Input Jumlah
               TextField(
                 controller: quantityController,
                 decoration: const InputDecoration(
                   labelText: 'Jumlah',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.number,  // Keyboard angka
               ),
             ],
           ),
         ),
+        
         actions: [
+          // Tombol Batal
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
+          
+          // Tombol Simpan
           ElevatedButton(
             onPressed: () async {
+              // Validasi: semua field harus diisi
               if (itemController.text.isEmpty ||
                   quantityController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -79,21 +103,25 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 return;
               }
 
+              // Buat object ShoppingList
               final shoppingItemToSave = ShoppingList(
-                id: shoppingItem?.id,
+                id: shoppingItem?.id,  // ID (null untuk data baru)
                 item: itemController.text,
                 quantity: int.parse(quantityController.text),
               );
 
+              // Simpan ke database
               if (shoppingItem == null) {
-                await _dbHelper.insertShoppingList(shoppingItemToSave);
+                await _dbHelper.insertShoppingList(shoppingItemToSave);  // Tambah baru
               } else {
-                await _dbHelper.updateShoppingList(shoppingItemToSave);
+                await _dbHelper.updateShoppingList(shoppingItemToSave);  // Update
               }
 
               if (mounted) {
-                Navigator.pop(context);
-                _loadShoppingList();
+                Navigator.pop(context);  // Tutup dialog
+                _loadShoppingList();     // Refresh data
+                
+                // Tampilkan notifikasi sukses
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -112,7 +140,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  // Fungsi untuk menghapus barang dari daftar belanja
   Future<void> _deleteShoppingItem(ShoppingList shoppingItem) async {
+    // Tampilkan dialog konfirmasi
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -132,9 +162,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
 
+    // Kalau user klik "Hapus"
     if (confirm == true) {
-      await _dbHelper.deleteShoppingList(shoppingItem.id!);
-      _loadShoppingList();
+      await _dbHelper.deleteShoppingList(shoppingItem.id!);  // Hapus dari database
+      _loadShoppingList();  // Refresh data
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Barang dihapus dari daftar belanja')),
@@ -147,7 +179,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isLoading
+          // Kalau loading, tampilkan loading indicator
           ? const Center(child: CircularProgressIndicator())
+          
+          // Kalau data kosong, tampilkan pesan kosong
           : _shoppingList.isEmpty
               ? Center(
                   child: Column(
@@ -162,30 +197,43 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     ],
                   ),
                 )
+              
+              // Kalau ada data, tampilkan list
               : ListView.builder(
                   padding: const EdgeInsets.all(8),
                   itemCount: _shoppingList.length,
                   itemBuilder: (context, index) {
                     final shoppingItem = _shoppingList[index];
+                    
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
+                        // Icon di kiri
                         leading: CircleAvatar(
                           backgroundColor: Colors.blue[100],
                           child: const Icon(Icons.shopping_cart, color: Colors.blue),
                         ),
+                        
+                        // Nama barang
                         title: Text(
                           shoppingItem.item,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        
+                        // Jumlah
                         subtitle: Text('Jumlah: ${shoppingItem.quantity}'),
+                        
+                        // Tombol Edit & Hapus di kanan
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Tombol Edit
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               onPressed: () => _showAddEditDialog(shoppingItem: shoppingItem),
                             ),
+                            
+                            // Tombol Hapus
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () => _deleteShoppingItem(shoppingItem),
@@ -196,6 +244,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     );
                   },
                 ),
+      
+      // Tombol tambah di kanan bawah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
         backgroundColor: Colors.blue,
@@ -204,4 +254,3 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 }
-
