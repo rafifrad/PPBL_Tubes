@@ -16,28 +16,28 @@ class IncomeScreen extends StatefulWidget {
 class _IncomeScreenState extends State<IncomeScreen> {
   // Instance database helper
   final _db = DatabaseHelper.instance;
-  
+
   // List untuk menyimpan semua data pemasukan
   List<Income> _incomes = [];
-  
+
   // Status loading
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadIncomes();  // Load data saat pertama kali buka halaman
+    _loadIncomes(); // Load data saat pertama kali buka halaman
   }
 
   // Fungsi untuk mengambil semua data pemasukan dari database
   Future<void> _loadIncomes() async {
-    setState(() => _loading = true);  // Tampilkan loading
-    
-    final data = await _db.getAllIncomes();  // Ambil data dari database
-    
+    setState(() => _loading = true); // Tampilkan loading
+
+    final data = await _db.getAllIncomes(); // Ambil data dari database
+
     setState(() {
-      _incomes = data;     // Simpan data ke variable
-      _loading = false;    // Matikan loading
+      _incomes = data; // Simpan data ke variable
+      _loading = false; // Matikan loading
     });
   }
 
@@ -45,30 +45,30 @@ class _IncomeScreenState extends State<IncomeScreen> {
   // Hasilnya: {"2025-12-27": [income1, income2], "2025-12-26": [income3]}
   Map<String, List<Income>> _groupByDate() {
     Map<String, List<Income>> grouped = {};
-    
+
     for (var income in _incomes) {
-      String date = income.date;  // Ambil tanggal
-      
+      String date = income.date; // Ambil tanggal
+
       // Kalau tanggal belum ada di map, buat list baru
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
       }
-      
+
       // Tambahkan income ke list tanggal tersebut
       grouped[date]!.add(income);
     }
-    
+
     return grouped;
   }
 
   // Fungsi untuk format tanggal jadi "Hari Ini", "Kemarin", atau tanggal lengkap
   String _formatDate(String dateString) {
-    DateTime date = DateTime.parse(dateString);  // Parse string jadi DateTime
-    DateTime now = DateTime.now();  // Tanggal hari ini
-    
+    DateTime date = DateTime.parse(dateString); // Parse string jadi DateTime
+    DateTime now = DateTime.now(); // Tanggal hari ini
+
     // Hitung selisih hari
     int difference = now.difference(date).inDays;
-    
+
     if (difference == 0) {
       return 'Hari Ini';
     } else if (difference == 1) {
@@ -76,8 +76,18 @@ class _IncomeScreenState extends State<IncomeScreen> {
     } else {
       // Format: "27 Desember 2025"
       List<String> months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
       ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     }
@@ -88,7 +98,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
     String str = amount.toInt().toString();
     String result = '';
     int count = 0;
-    
+
     // Loop dari belakang, tambahkan titik setiap 3 digit
     for (int i = str.length - 1; i >= 0; i--) {
       if (count == 3) {
@@ -98,7 +108,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
       result = str[i] + result;
       count++;
     }
-    
+
     return result;
   }
 
@@ -108,17 +118,14 @@ class _IncomeScreenState extends State<IncomeScreen> {
     final nominalCtrl = TextEditingController(
       text: income?.amount.toString() ?? '',
     );
-    final categoryCtrl = TextEditingController(
-      text: income?.category ?? '',
-    );
+    final categoryCtrl = TextEditingController(text: income?.category ?? '');
     final descriptionCtrl = TextEditingController(
       text: income?.description ?? '',
     );
-    
+
     // Tanggal yang dipilih (default: hari ini atau tanggal dari income)
-    DateTime selectedDate = income != null 
-        ? DateTime.parse(income.date) 
-        : DateTime.now();
+    DateTime selectedDate =
+        income != null ? DateTime.parse(income.date) : DateTime.now();
 
     await showDialog(
       context: context,
@@ -127,8 +134,10 @@ class _IncomeScreenState extends State<IncomeScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               // Judul dialog (Tambah atau Edit)
-              title: Text(income == null ? 'Tambah Pemasukan' : 'Edit Pemasukan'),
-              
+              title: Text(
+                income == null ? 'Tambah Pemasukan' : 'Edit Pemasukan',
+              ),
+
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -141,10 +150,10 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         prefixText: 'Rp ',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: TextInputType.number,  // Keyboard angka
+                      keyboardType: TextInputType.number, // Keyboard angka
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Input Kategori
                     TextField(
                       controller: categoryCtrl,
@@ -155,7 +164,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Input Deskripsi (opsional)
                     TextField(
                       controller: descriptionCtrl,
@@ -167,7 +176,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Pilih Tanggal
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -184,7 +193,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                           firstDate: DateTime(2020),
                           lastDate: DateTime(2100),
                         );
-                        
+
                         if (picked != null) {
                           setStateDialog(() => selectedDate = picked);
                         }
@@ -193,21 +202,23 @@ class _IncomeScreenState extends State<IncomeScreen> {
                   ],
                 ),
               ),
-              
+
               actions: [
                 // Tombol Batal
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Batal'),
                 ),
-                
+
                 // Tombol Simpan
                 ElevatedButton(
                   onPressed: () async {
                     // Validasi: nominal dan kategori harus diisi
                     if (nominalCtrl.text.isEmpty || categoryCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Nominal dan kategori harus diisi')),
+                        const SnackBar(
+                          content: Text('Nominal dan kategori harus diisi'),
+                        ),
                       );
                       return;
                     }
@@ -223,20 +234,22 @@ class _IncomeScreenState extends State<IncomeScreen> {
 
                     // Simpan ke database
                     if (income == null) {
-                      await _db.insertIncome(incomeData);  // Tambah baru
+                      await _db.insertIncome(incomeData); // Tambah baru
                     } else {
-                      await _db.updateIncome(incomeData);  // Update yang lama
+                      await _db.updateIncome(incomeData); // Update yang lama
                     }
 
                     if (!mounted) return;
-                    Navigator.pop(context);  // Tutup dialog
-                    _loadIncomes();  // Refresh data
-                    
+                    Navigator.pop(context); // Tutup dialog
+                    _loadIncomes(); // Refresh data
+
                     // Tampilkan notifikasi sukses
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          income == null ? 'Pemasukan ditambahkan' : 'Pemasukan diperbarui',
+                          income == null
+                              ? 'Pemasukan ditambahkan'
+                              : 'Pemasukan diperbarui',
                         ),
                       ),
                     );
@@ -253,36 +266,13 @@ class _IncomeScreenState extends State<IncomeScreen> {
 
   // Fungsi untuk hapus pemasukan
   Future<void> _deleteIncome(Income income) async {
-    // Tampilkan dialog konfirmasi
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Pemasukan'),
-        content: Text('Yakin hapus pemasukan ${income.category}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
+    await _db.deleteIncome(income.id!);
+    _loadIncomes();
 
-    // Kalau user klik "Hapus"
-    if (confirm == true) {
-      await _db.deleteIncome(income.id!);  // Hapus dari database
-      _loadIncomes();  // Refresh data
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pemasukan dihapus')),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Pemasukan dihapus')));
   }
 
   @override
@@ -298,7 +288,11 @@ class _IncomeScreenState extends State<IncomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.account_balance_wallet_outlined, size: 80, color: Colors.grey[300]),
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 80,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: 16),
             Text(
               'Belum ada catatan pemasukan',
@@ -311,10 +305,10 @@ class _IncomeScreenState extends State<IncomeScreen> {
 
     // Kelompokkan data berdasarkan tanggal
     final groupedIncomes = _groupByDate();
-    
+
     // Urutkan tanggal dari terbaru ke terlama
-    final sortedDates = groupedIncomes.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates =
+        groupedIncomes.keys.toList()..sort((a, b) => b.compareTo(a));
 
     // Tampilkan list
     return Scaffold(
@@ -324,7 +318,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
         itemBuilder: (context, index) {
           String date = sortedDates[index];
           List<Income> incomes = groupedIncomes[date]!;
-          
+
           // Hitung total pemasukan untuk tanggal ini
           double total = 0;
           for (var income in incomes) {
@@ -337,7 +331,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
               // HEADER TANGGAL
               Container(
                 padding: const EdgeInsets.all(12),
-                color: Colors.green[50],  // Warna hijau untuk income
+                color: Colors.green[50], // Warna hijau untuk income
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -349,14 +343,14 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
+
                     // Total pemasukan hari ini
                     Text(
                       'Total: Rp ${_formatRupiah(total)}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,  // Hijau untuk income
+                        color: Colors.green, // Hijau untuk income
                       ),
                     ),
                   ],
@@ -365,63 +359,121 @@ class _IncomeScreenState extends State<IncomeScreen> {
 
               // LIST PEMASUKAN
               ...incomes.map((income) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: ListTile(
-                    // Icon di kiri (hijau untuk income)
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.green[100],
-                      child: const Icon(Icons.account_balance_wallet, color: Colors.green),
-                    ),
-                    
-                    // Konten utama
-                    title: Text(
-                      income.category,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    
-                    // Deskripsi (kalau ada)
-                    subtitle: income.description.isNotEmpty
-                        ? Text(income.description)
-                        : null,
-                    
-                    // Nominal di kanan
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Tampilkan nominal (hijau untuk income)
-                        Text(
-                          '+Rp ${_formatRupiah(income.amount)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,  // Hijau untuk income
+                return Dismissible(
+                  key: Key(income.id.toString()),
+                  direction: DismissDirection.startToEnd,
+                  confirmDismiss: (direction) async {
+                    final result = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Konfirmasi'),
+                          content: Text(
+                            'Yakin ingin menghapus pemasukan ${income.category}?',
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        
-                        // Tombol Edit
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                          onPressed: () => _showIncomeDialog(income: income),
-                        ),
-                        
-                        // Tombol Hapus
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                          onPressed: () => _deleteIncome(income),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    return result ?? false;
+                  },
+                  onDismissed: (direction) => _deleteIncome(income),
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.white, size: 28),
+                        SizedBox(width: 8),
+                        Text(
+                          'Hapus',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: GestureDetector(
+                      onDoubleTap: () => _showIncomeDialog(income: income),
+                      child: ListTile(
+                        // Icon di kiri (hijau untuk income)
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.green[100],
+                          child: const Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.green,
+                          ),
+                        ),
+
+                        // Konten utama
+                        title: Text(
+                          income.category,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+
+                        // Deskripsi (kalau ada)
+                        subtitle:
+                            income.description.isNotEmpty
+                                ? Text(income.description)
+                                : null,
+
+                        // Nominal dan hint di kanan
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '+Rp ${_formatRupiah(income.amount)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                            Text(
+                              '2x Tap',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
-              
+
               const SizedBox(height: 8),
             ],
           );
         },
       ),
-      
+
       // Tombol tambah di kanan bawah (hijau untuk income)
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showIncomeDialog(),

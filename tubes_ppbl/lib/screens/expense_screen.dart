@@ -13,10 +13,10 @@ class ExpenseScreen extends StatefulWidget {
 class _ExpenseScreenState extends State<ExpenseScreen> {
   // Database helper untuk akses database
   final _db = DatabaseHelper.instance;
-  
+
   // List untuk menyimpan semua data pengeluaran
   List<Expense> _expenses = [];
-  
+
   // Status loading (true = sedang loading, false = selesai)
   bool _loading = true;
 
@@ -30,9 +30,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   // Fungsi untuk mengambil semua data pengeluaran dari database
   Future<void> _loadExpenses() async {
     setState(() => _loading = true); // Tampilkan loading
-    
+
     final data = await _db.getAllExpenses(); // Ambil data dari database
-    
+
     setState(() {
       _expenses = data; // Simpan data ke variable
       _loading = false; // Matikan loading
@@ -43,19 +43,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   // Hasilnya: {"2025-12-27": [expense1, expense2], "2025-12-26": [expense3]}
   Map<String, List<Expense>> _groupByDate() {
     Map<String, List<Expense>> grouped = {};
-    
+
     for (var expense in _expenses) {
       String date = expense.date; // Ambil tanggal
-      
+
       // Kalau tanggal belum ada di map, buat list baru
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
       }
-      
+
       // Tambahkan expense ke list tanggal tersebut
       grouped[date]!.add(expense);
     }
-    
+
     return grouped;
   }
 
@@ -63,10 +63,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   String _formatDate(String dateString) {
     DateTime date = DateTime.parse(dateString); // Parse string jadi DateTime
     DateTime now = DateTime.now(); // Tanggal hari ini
-    
+
     // Hitung selisih hari
     int difference = now.difference(date).inDays;
-    
+
     if (difference == 0) {
       return 'Hari Ini';
     } else if (difference == 1) {
@@ -74,8 +74,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     } else {
       // Format: "27 Desember 2025"
       List<String> months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
       ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     }
@@ -86,7 +96,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     String str = amount.toInt().toString();
     String result = '';
     int count = 0;
-    
+
     // Loop dari belakang, tambahkan titik setiap 3 digit
     for (int i = str.length - 1; i >= 0; i--) {
       if (count == 3) {
@@ -96,7 +106,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       result = str[i] + result;
       count++;
     }
-    
+
     return result;
   }
 
@@ -106,17 +116,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     final nominalCtrl = TextEditingController(
       text: expense?.amount.toString() ?? '',
     );
-    final categoryCtrl = TextEditingController(
-      text: expense?.category ?? '',
-    );
+    final categoryCtrl = TextEditingController(text: expense?.category ?? '');
     final descriptionCtrl = TextEditingController(
       text: expense?.description ?? '',
     );
-    
+
     // Tanggal yang dipilih (default: hari ini atau tanggal dari expense)
-    DateTime selectedDate = expense != null 
-        ? DateTime.parse(expense.date) 
-        : DateTime.now();
+    DateTime selectedDate =
+        expense != null ? DateTime.parse(expense.date) : DateTime.now();
 
     await showDialog(
       context: context,
@@ -124,7 +131,9 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text(expense == null ? 'Tambah Pengeluaran' : 'Edit Pengeluaran'),
+              title: Text(
+                expense == null ? 'Tambah Pengeluaran' : 'Edit Pengeluaran',
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -140,7 +149,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Input Kategori
                     TextField(
                       controller: categoryCtrl,
@@ -151,7 +160,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Input Deskripsi (opsional)
                     TextField(
                       controller: descriptionCtrl,
@@ -163,7 +172,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // Pilih Tanggal
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -180,7 +189,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                           firstDate: DateTime(2020),
                           lastDate: DateTime(2100),
                         );
-                        
+
                         if (picked != null) {
                           setStateDialog(() => selectedDate = picked);
                         }
@@ -195,14 +204,16 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Batal'),
                 ),
-                
+
                 // Tombol Simpan
                 ElevatedButton(
                   onPressed: () async {
                     // Validasi: nominal dan kategori harus diisi
                     if (nominalCtrl.text.isEmpty || categoryCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Nominal dan kategori harus diisi')),
+                        const SnackBar(
+                          content: Text('Nominal dan kategori harus diisi'),
+                        ),
                       );
                       return;
                     }
@@ -226,12 +237,14 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     if (!mounted) return;
                     Navigator.pop(context); // Tutup dialog
                     _loadExpenses(); // Refresh data
-                    
+
                     // Tampilkan notifikasi sukses
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          expense == null ? 'Pengeluaran ditambahkan' : 'Pengeluaran diperbarui',
+                          expense == null
+                              ? 'Pengeluaran ditambahkan'
+                              : 'Pengeluaran diperbarui',
                         ),
                       ),
                     );
@@ -248,36 +261,13 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   // Fungsi untuk hapus pengeluaran
   Future<void> _deleteExpense(Expense expense) async {
-    // Tampilkan dialog konfirmasi
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Pengeluaran'),
-        content: Text('Yakin hapus pengeluaran ${expense.category}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
+    await _db.deleteExpense(expense.id!);
+    _loadExpenses();
 
-    // Kalau user klik "Hapus"
-    if (confirm == true) {
-      await _db.deleteExpense(expense.id!); // Hapus dari database
-      _loadExpenses(); // Refresh data
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pengeluaran dihapus')),
-      );
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Pengeluaran dihapus')));
   }
 
   @override
@@ -293,7 +283,11 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[300]),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: 16),
             Text(
               'Belum ada catatan pengeluaran',
@@ -306,10 +300,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
     // Kelompokkan data berdasarkan tanggal
     final groupedExpenses = _groupByDate();
-    
+
     // Urutkan tanggal dari terbaru ke terlama
-    final sortedDates = groupedExpenses.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates =
+        groupedExpenses.keys.toList()..sort((a, b) => b.compareTo(a));
 
     // Tampilkan list
     return Scaffold(
@@ -319,7 +313,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         itemBuilder: (context, index) {
           String date = sortedDates[index];
           List<Expense> expenses = groupedExpenses[date]!;
-          
+
           // Hitung total pengeluaran untuk tanggal ini
           double total = 0;
           for (var expense in expenses) {
@@ -344,7 +338,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
+
                     // Total pengeluaran hari ini
                     Text(
                       'Total: Rp ${_formatRupiah(total)}',
@@ -360,63 +354,118 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
               // LIST PENGELUARAN
               ...expenses.map((expense) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: ListTile(
-                    // Icon di kiri
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue[100],
-                      child: const Icon(Icons.payments, color: Colors.blue),
-                    ),
-                    
-                    // Konten utama
-                    title: Text(
-                      expense.category,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    
-                    // Deskripsi (kalau ada)
-                    subtitle: expense.description.isNotEmpty
-                        ? Text(expense.description)
-                        : null,
-                    
-                    // Nominal di kanan
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Tampilkan nominal
-                        Text(
-                          '-Rp ${_formatRupiah(expense.amount)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                return Dismissible(
+                  key: Key(expense.id.toString()),
+                  direction: DismissDirection.startToEnd,
+                  confirmDismiss: (direction) async {
+                    final result = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Konfirmasi'),
+                          content: Text(
+                            'Yakin ingin menghapus pengeluaran ${expense.category}?',
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        
-                        // Tombol Edit
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                          onPressed: () => _showExpenseDialog(expense: expense),
-                        ),
-                        
-                        // Tombol Hapus
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                          onPressed: () => _deleteExpense(expense),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Batal'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    return result ?? false;
+                  },
+                  onDismissed: (direction) => _deleteExpense(expense),
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.white, size: 28),
+                        SizedBox(width: 8),
+                        Text(
+                          'Hapus',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: GestureDetector(
+                      onDoubleTap: () => _showExpenseDialog(expense: expense),
+                      child: ListTile(
+                        // Icon di kiri
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue[100],
+                          child: const Icon(Icons.payments, color: Colors.blue),
+                        ),
+
+                        // Konten utama
+                        title: Text(
+                          expense.category,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+
+                        // Deskripsi (kalau ada)
+                        subtitle:
+                            expense.description.isNotEmpty
+                                ? Text(expense.description)
+                                : null,
+
+                        // Nominal dan hint di kanan
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '-Rp ${_formatRupiah(expense.amount)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red,
+                              ),
+                            ),
+                            Text(
+                              '2x Tap',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
-              
+
               const SizedBox(height: 8),
             ],
           );
         },
       ),
-      
+
       // Tombol tambah di kanan bawah
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showExpenseDialog(),
