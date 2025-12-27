@@ -1,5 +1,6 @@
 // Import package Flutter untuk Material Design (tampilan Android/iOS modern)
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Import semua screen/halaman yang ada di aplikasi
 import 'screens/home_screen.dart';
@@ -17,7 +18,7 @@ import 'screens/activity_reminder_screen.dart';
 void main() {
   // Pastikan Flutter sudah siap sebelum menjalankan aplikasi
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Jalankan aplikasi dengan widget MyApp sebagai root
   runApp(const MyApp());
 }
@@ -31,19 +32,99 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       // Judul aplikasi (muncul di task manager)
       title: 'Kelola Kebutuhan Kost',
-      
+
       // Hilangkan banner "DEBUG" di kanan atas (set true untuk tampilkan)
       debugShowCheckedModeBanner: true,
-      
+
       // Tema warna aplikasi
       theme: ThemeData(
-        // Skema warna utama (indigo/ungu kebiruan)
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        
+        // Skema warna utama dengan background putih
+        colorScheme: ColorScheme.light(
+          primary: Colors.blue,
+          secondary: Colors.blue.shade700,
+          surface: Colors.white,
+          background: Colors.white,
+        ),
+
+        // Atur background scaffold menjadi putih
+        scaffoldBackgroundColor: Colors.white,
+
+        // Tema untuk text menggunakan font Poppins
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
+
+        // Tema untuk AppBar
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          centerTitle: true,
+          titleTextStyle: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+
+        // Tema untuk button (semua button berwarna biru)
+        buttonTheme: ButtonThemeData(
+          buttonColor: Colors.blue,
+          textTheme: ButtonTextTheme.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+
+        // Tema untuk ElevatedButton
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            textStyle: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+
+        // Tema untuk TextButton
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.blue,
+            textStyle: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        // Tema untuk OutlinedButton
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.blue,
+            side: const BorderSide(color: Colors.blue, width: 2),
+            textStyle: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+
+        // Tema untuk FloatingActionButton
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+        ),
+
         // Gunakan Material Design 3 (desain terbaru)
         useMaterial3: true,
       ),
-      
+
       // Halaman pertama yang ditampilkan
       home: const MainScreen(),
     );
@@ -61,25 +142,25 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   // Index halaman yang sedang aktif (0 = Home, 1 = Persediaan Makanan, dst)
   int _currentIndex = 0;
-  
+
   // List semua halaman/screen yang ada di aplikasi
   final List<Widget> _screens = [
-    const HomeScreen(),              // 0
-    const FoodScreen(),              // 1
-    const EquipmentScreen(),         // 2
-    const LaundryScreen(),           // 3
-    const ExpenseScreen(),           // 4
-    const BillScreen(),              // 5
-    const FinanceNoteScreen(),       // 6
-    const DailyNeedScreen(),         // 7
-    const ShoppingListScreen(),      // 8
-    const ActivityReminderScreen(),  // 9
+    const HomeScreen(), // 0
+    const FoodScreen(), // 1
+    const EquipmentScreen(), // 2
+    const LaundryScreen(), // 3
+    const ExpenseScreen(), // 4
+    const BillScreen(), // 5
+    const FinanceNoteScreen(), // 6
+    const DailyNeedScreen(), // 7
+    const ShoppingListScreen(), // 8
+    const ActivityReminderScreen(), // 9
   ];
 
   // List judul untuk setiap halaman (ditampilkan di AppBar)
   final List<String> _titles = [
     'Home',
-    'Persediaan Makanan', 
+    'Persediaan Makanan',
     'Peralatan Kamar',
     'Laundry',
     'Pengeluaran Kos',
@@ -108,7 +189,7 @@ class _MainScreenState extends State<MainScreen> {
         foregroundColor: Colors.black,
         elevation: 0, // Hilangkan shadow
       ),
-      
+
       // Drawer - Menu samping yang bisa di-slide dari kiri
       drawer: Drawer(
         child: ListView(
@@ -118,13 +199,14 @@ class _MainScreenState extends State<MainScreen> {
             DrawerHeader(
               decoration: const BoxDecoration(color: Colors.indigo),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   // Icon rumah
                   Icon(Icons.home, size: 48, color: Colors.white),
                   SizedBox(height: 8),
-                  
+
                   // Judul aplikasi
                   Text(
                     'Aplikasi Kelola Kebutuhan Kost',
@@ -137,22 +219,22 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
             ),
-            
+
             // List menu items - dibuat otomatis dari _titles
             ..._titles.asMap().entries.map(
               (entry) => ListTile(
-                leading: _getIcon(entry.key),      // Icon menu
-                title: Text(entry.value),          // Nama menu
+                leading: _getIcon(entry.key), // Icon menu
+                title: Text(entry.value), // Nama menu
                 onTap: () {
-                  Navigator.pop(context);          // Tutup drawer
-                  _onItemTapped(entry.key);        // Pindah ke halaman yang diklik
+                  Navigator.pop(context); // Tutup drawer
+                  _onItemTapped(entry.key); // Pindah ke halaman yang diklik
                 },
               ),
             ),
           ],
         ),
       ),
-      
+
       // Body - Konten utama (halaman yang sedang aktif)
       body: _screens[_currentIndex],
     );
@@ -162,27 +244,27 @@ class _MainScreenState extends State<MainScreen> {
   Icon _getIcon(int index) {
     switch (index) {
       case 0:
-        return const Icon(Icons.home_outlined);                    // Home
+        return const Icon(Icons.home_outlined); // Home
       case 1:
-        return const Icon(Icons.fastfood_outlined);                // Makanan
+        return const Icon(Icons.fastfood_outlined); // Makanan
       case 2:
-        return const Icon(Icons.chair_alt_outlined);               // Peralatan
+        return const Icon(Icons.chair_alt_outlined); // Peralatan
       case 3:
-        return const Icon(Icons.local_laundry_service_outlined);   // Laundry
+        return const Icon(Icons.local_laundry_service_outlined); // Laundry
       case 4:
-        return const Icon(Icons.payments_outlined);                // Pengeluaran
+        return const Icon(Icons.payments_outlined); // Pengeluaran
       case 5:
-        return const Icon(Icons.receipt_long_outlined);            // Tagihan
+        return const Icon(Icons.receipt_long_outlined); // Tagihan
       case 6:
-        return const Icon(Icons.sticky_note_2_outlined);           // Catatan Keuangan
+        return const Icon(Icons.sticky_note_2_outlined); // Catatan Keuangan
       case 7:
-        return const Icon(Icons.check_circle_outline);             // Kebutuhan Harian
+        return const Icon(Icons.check_circle_outline); // Kebutuhan Harian
       case 8:
-        return const Icon(Icons.shopping_cart_outlined);           // Belanja
+        return const Icon(Icons.shopping_cart_outlined); // Belanja
       case 9:
-        return const Icon(Icons.notifications_outlined);           // Pengingat
+        return const Icon(Icons.notifications_outlined); // Pengingat
       default:
-        return const Icon(Icons.error);                            // Error (jaga-jaga)
+        return const Icon(Icons.error); // Error (jaga-jaga)
     }
   }
-  }
+}

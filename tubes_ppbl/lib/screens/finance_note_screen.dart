@@ -6,6 +6,8 @@ import 'package:intl/intl.dart'; // Untuk format tanggal & mata uang
 import '../database/database_helper.dart';
 // Import model FinanceNote (cetakan data catatan keuangan)
 import '../models/finance_note.dart';
+// Import custom widgets
+import '../widgets/widgets.dart';
 
 // Halaman Catatan Keuangan - Versi Perbankan (Banking Style)
 class FinanceNoteScreen extends StatefulWidget {
