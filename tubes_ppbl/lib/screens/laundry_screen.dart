@@ -1,5 +1,6 @@
 // Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Untuk format mata uang
 // Import model Laundry (cetakan data cucian)
 import '../models/laundry.dart';
 // Import database helper untuk akses database
@@ -48,6 +49,9 @@ class _LaundryScreenState extends State<LaundryScreen> {
     final quantityController = TextEditingController(
       text: laundry?.quantity.toString() ?? '',
     );
+    final priceController = TextEditingController(
+      text: laundry?.price.toString() ?? '',
+    );
     
     // Status yang dipilih (default: "Pending" atau status dari laundry)
     String selectedStatus = laundry?.status ?? 'Pending';
@@ -87,6 +91,18 @@ class _LaundryScreenState extends State<LaundryScreen> {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,  // Keyboard angka
+                ),
+                const SizedBox(height: 16),
+
+                // Input Harga
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga/Biaya',
+                    prefixText: 'Rp ',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 16),
                 
@@ -139,6 +155,7 @@ class _LaundryScreenState extends State<LaundryScreen> {
                   type: typeController.text,
                   quantity: int.parse(quantityController.text),
                   status: selectedStatus,
+                  price: double.tryParse(priceController.text) ?? 0,
                 );
 
                 // Simpan ke database
@@ -279,6 +296,11 @@ class _LaundryScreenState extends State<LaundryScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Jumlah: ${laundry.quantity}'),
+                          if (laundry.price > 0)
+                            Text(
+                              'Biaya: Rp ${NumberFormat('#,###', 'id_ID').format(laundry.price)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple),
+                            ),
                           const SizedBox(height: 4),
                           
                           // Badge status dengan warna

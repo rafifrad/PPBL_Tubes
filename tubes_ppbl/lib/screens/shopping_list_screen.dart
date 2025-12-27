@@ -1,5 +1,6 @@
 // Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Untuk format mata uang
 // Import model ShoppingList (cetakan data daftar belanja)
 import '../models/shopping_list.dart';
 // Import database helper untuk akses database
@@ -48,6 +49,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final quantityController = TextEditingController(
       text: shoppingItem?.quantity.toString() ?? '',
     );
+    final priceController = TextEditingController(
+      text: shoppingItem?.price.toString() ?? '',
+    );
 
     await showDialog(
       context: context,
@@ -78,6 +82,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
                 keyboardType: TextInputType.number,  // Keyboard angka
               ),
+              const SizedBox(height: 16),
+
+              // Input Harga
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Harga Satuan/Unit',
+                  prefixText: 'Rp ',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -108,6 +125,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 id: shoppingItem?.id,  // ID (null untuk data baru)
                 item: itemController.text,
                 quantity: int.parse(quantityController.text),
+                price: double.tryParse(priceController.text) ?? 0,
               );
 
               // Simpan ke database
@@ -220,8 +238,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         
-                        // Jumlah
-                        subtitle: Text('Jumlah: ${shoppingItem.quantity}'),
+                        // Jumlah & Harga
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Jumlah: ${shoppingItem.quantity}'),
+                            if (shoppingItem.price > 0)
+                              Text(
+                                'Total: Rp ${NumberFormat('#,###', 'id_ID').format(shoppingItem.price * shoppingItem.quantity)}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                              ),
+                          ],
+                        ),
                         
                         // Tombol Edit & Hapus di kanan
                         trailing: Row(

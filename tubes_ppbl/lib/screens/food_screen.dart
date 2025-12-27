@@ -1,5 +1,6 @@
 // Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Untuk format mata uang
 // Import model Food (cetakan data makanan)
 import '../models/food.dart';
 // Import database helper untuk akses database
@@ -48,6 +49,9 @@ class _FoodScreenState extends State<FoodScreen> {
     final quantityController = TextEditingController(
       text: food?.quantity.toString() ?? '',
     );
+    final priceController = TextEditingController(
+      text: food?.price.toString() ?? '',
+    );
     
     // Tanggal yang dipilih (default: hari ini atau tanggal dari food)
     DateTime selectedDate =
@@ -82,6 +86,18 @@ class _FoodScreenState extends State<FoodScreen> {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,  // Keyboard angka
+                ),
+                const SizedBox(height: 16),
+
+                // Input Harga
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga Satuan/Unit',
+                    prefixText: 'Rp ',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 16),
                 
@@ -137,6 +153,7 @@ class _FoodScreenState extends State<FoodScreen> {
                   name: nameController.text,
                   quantity: int.parse(quantityController.text),
                   purchaseDate: selectedDate.toIso8601String().split('T')[0],
+                  price: double.tryParse(priceController.text) ?? 0,
                 );
 
                 // Simpan ke database
@@ -256,6 +273,11 @@ class _FoodScreenState extends State<FoodScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Jumlah: ${food.quantity}'),
+                          if (food.price > 0)
+                            Text(
+                              'Total: Rp ${NumberFormat('#,###', 'id_ID').format(food.price * food.quantity)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                            ),
                           Text('Tanggal Beli: ${food.purchaseDate}'),
                         ],
                       ),

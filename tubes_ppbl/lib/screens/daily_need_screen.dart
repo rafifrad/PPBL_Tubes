@@ -1,5 +1,6 @@
 // Import package Flutter untuk UI
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Untuk format mata uang
 // Import model DailyNeed (cetakan data kebutuhan harian)
 import '../models/daily_need.dart';
 // Import database helper untuk akses database
@@ -48,6 +49,9 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
     final quantityController = TextEditingController(
       text: dailyNeed?.quantity.toString() ?? '',
     );
+    final priceController = TextEditingController(
+      text: dailyNeed?.price.toString() ?? '',
+    );
 
     await showDialog(
       context: context,
@@ -78,6 +82,19 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                 ),
                 keyboardType: TextInputType.number,  // Keyboard angka
               ),
+              const SizedBox(height: 16),
+
+              // Input Harga
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Harga Satuan/Unit',
+                  prefixText: 'Rp ',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -108,6 +125,7 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                 id: dailyNeed?.id,  // ID (null untuk data baru)
                 name: nameController.text,
                 quantity: int.parse(quantityController.text),
+                price: double.tryParse(priceController.text) ?? 0,
               );
 
               // Simpan ke database
@@ -220,8 +238,18 @@ class _DailyNeedScreenState extends State<DailyNeedScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         
-                        // Jumlah
-                        subtitle: Text('Jumlah: ${dailyNeed.quantity}'),
+                        // Jumlah & Harga
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Jumlah: ${dailyNeed.quantity}'),
+                            if (dailyNeed.price > 0)
+                              Text(
+                                'Total: Rp ${NumberFormat('#,###', 'id_ID').format(dailyNeed.price * dailyNeed.quantity)}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                              ),
+                          ],
+                        ),
                         
                         // Tombol Edit & Hapus di kanan
                         trailing: Row(

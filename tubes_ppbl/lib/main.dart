@@ -7,7 +7,6 @@ import 'screens/food_screen.dart';
 import 'screens/equipment_screen.dart';
 import 'screens/laundry_screen.dart';
 import 'screens/expense_screen.dart';
-import 'screens/income_screen.dart';  // Import halaman pemasukan
 import 'screens/bill_screen.dart';
 import 'screens/finance_note_screen.dart';
 import 'screens/daily_need_screen.dart';
@@ -70,12 +69,11 @@ class _MainScreenState extends State<MainScreen> {
     const EquipmentScreen(),         // 2
     const LaundryScreen(),           // 3
     const ExpenseScreen(),           // 4
-    const IncomeScreen(),            // 5 - Halaman Pemasukan (baru)
-    const BillScreen(),              // 6
-    const FinanceNoteScreen(),       // 7
-    const DailyNeedScreen(),         // 8
-    const ShoppingListScreen(),      // 9
-    const ActivityReminderScreen(),  // 10
+    const BillScreen(),              // 5
+    const FinanceNoteScreen(),       // 6
+    const DailyNeedScreen(),         // 7
+    const ShoppingListScreen(),      // 8
+    const ActivityReminderScreen(),  // 9
   ];
 
   // List judul untuk setiap halaman (ditampilkan di AppBar)
@@ -85,7 +83,6 @@ class _MainScreenState extends State<MainScreen> {
     'Peralatan Kamar',
     'Laundry',
     'Pengeluaran Kos',
-    'Pemasukan',           // Judul untuk halaman pemasukan (baru)
     'Tagihan Bulanan',
     'Catatan Keuangan',
     'Kebutuhan Harian',
@@ -175,16 +172,14 @@ class _MainScreenState extends State<MainScreen> {
       case 4:
         return const Icon(Icons.payments_outlined);                // Pengeluaran
       case 5:
-        return const Icon(Icons.account_balance_wallet_outlined, color: Colors.green);  // Pemasukan (hijau)
-      case 6:
         return const Icon(Icons.receipt_long_outlined);            // Tagihan
-      case 7:
+      case 6:
         return const Icon(Icons.sticky_note_2_outlined);           // Catatan Keuangan
-      case 8:
+      case 7:
         return const Icon(Icons.check_circle_outline);             // Kebutuhan Harian
-      case 9:
+      case 8:
         return const Icon(Icons.shopping_cart_outlined);           // Belanja
-      case 10:
+      case 9:
         return const Icon(Icons.notifications_outlined);           // Pengingat
       default:
         return const Icon(Icons.error);                            // Error (jaga-jaga)

@@ -3,38 +3,37 @@
 
 class Laundry {
   // Field/properti yang dimiliki setiap data laundry
-  int? id;          // ID unik (auto-generated oleh database)
-  String type;      // Jenis cucian (contoh: "Baju", "Celana", "Handuk")
-  int quantity;     // Jumlah (contoh: 5 potong)
-  String status;    // Status (contoh: "Belum Dicuci", "Sedang Dicuci", "Selesai")
+  int? id;          // ID unik
+  String type;      // Jenis cucian
+  int quantity;     // Jumlah
+  String status;    // Status
+  double price;     // Harga/biaya (baru)
 
-  // Constructor - cara membuat object Laundry baru
+  // Constructor
   Laundry({
-    this.id,                  // ID opsional
-    required this.type,       // Jenis wajib diisi
-    required this.quantity,   // Jumlah wajib diisi
-    required this.status,     // Status wajib diisi
+    this.id,
+    required this.type,
+    required this.quantity,
+    required this.status,
+    this.price = 0,
   });
 
-  // Factory method untuk membuat object Laundry dari Map (data dari database)
   factory Laundry.fromMap(Map<String, dynamic> map) => Laundry(
-        id: map['id'] as int?,            // Ambil ID
-        type: map['type'] as String,      // Ambil jenis
-        quantity: map['quantity'] as int, // Ambil jumlah
-        status: map['status'] as String,  // Ambil status
+        id: map['id'] as int?,
+        type: map['type'] as String,
+        quantity: map['quantity'] as int,
+        status: map['status'] as String,
+        price: (map['price'] as num?)?.toDouble() ?? 0,
       );
 
-  // Method untuk mengubah object Laundry jadi Map (untuk disimpan ke database)
   Map<String, dynamic> toMap() {
     final data = <String, dynamic>{
-      'type': type,         // Masukkan jenis
-      'quantity': quantity, // Masukkan jumlah
-      'status': status,     // Masukkan status
+      'type': type,
+      'quantity': quantity,
+      'status': status,
+      'price': price,
     };
-    
-    // Kalau ID ada, masukkan juga
     if (id != null) data['id'] = id;
-    
     return data;
   }
 }
