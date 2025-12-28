@@ -9,6 +9,7 @@ class SwipeableListItem extends StatelessWidget {
   final Widget leading;
   final Widget title;
   final Widget? subtitle;
+  final Widget? trailing;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final String deleteConfirmMessage;
@@ -18,6 +19,7 @@ class SwipeableListItem extends StatelessWidget {
     required this.leading,
     required this.title,
     this.subtitle,
+    this.trailing,
     required this.onEdit,
     required this.onDelete,
     this.deleteConfirmMessage = 'Yakin ingin menghapus item ini?',
@@ -105,6 +107,7 @@ class SwipeableListItem extends StatelessWidget {
             leading: leading,
             title: title,
             subtitle: subtitle,
+            trailing: trailing, // Gunakan parameter trailing
           ),
         ),
       ),

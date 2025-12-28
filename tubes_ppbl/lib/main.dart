@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 // Import semua screen/halaman yang ada di aplikasi
 import 'screens/home_screen.dart';
+import 'screens/financial_record_screen.dart';
+import 'screens/daily_need_screen.dart';
 import 'screens/food_screen.dart';
 import 'screens/equipment_screen.dart';
 import 'screens/laundry_screen.dart';
 import 'screens/bill_screen.dart';
-import 'screens/finance_note_screen.dart';
 import 'screens/shopping_list_screen.dart';
 import 'screens/activity_reminder_screen.dart';
-import 'screens/unified_finance_screen.dart';
 import 'screens/passcode_setup_screen.dart';
 import 'screens/passcode_lock_screen.dart';
 import 'services/passcode_service.dart';
@@ -271,19 +271,21 @@ class _MainScreenState extends State<MainScreen> {
   // List semua halaman/screen yang ada di aplikasi
   final List<Widget> _screens = [
     const HomeScreen(), // 0
-    const UnifiedFinanceScreen(), // 1 (Gabungan Pengeluaran & Kebutuhan)
-    const FoodScreen(), // 2
-    const EquipmentScreen(), // 3
-    const LaundryScreen(), // 4
-    const BillScreen(), // 5
-    const ShoppingListScreen(), // 6
-    const ActivityReminderScreen(), // 7
+    const FinancialRecordScreen(), // 1 (Catatan Keuangan)
+    const DailyNeedScreen(), // 2 (Kebutuhan Harian)
+    const FoodScreen(), // 3
+    const EquipmentScreen(), // 4
+    const LaundryScreen(), // 5
+    const BillScreen(), // 6
+    const ShoppingListScreen(), // 7
+    const ActivityReminderScreen(), // 8
   ];
 
   // List judul untuk setiap halaman (ditampilkan di AppBar)
   final List<String> _titles = [
     'Home',
-    'Keuangan & Kebutuhan', // Judul baru
+    'Catatan Keuangan',
+    'Kebutuhan Harian',
     'Persediaan Makanan',
     'Peralatan Kamar',
     'Laundry',
@@ -367,18 +369,20 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return const Icon(Icons.home_outlined); // Home
       case 1:
-        return const Icon(Icons.account_balance_wallet_outlined); // Keuangan & Kebutuhan
+        return const Icon(Icons.account_balance_wallet_outlined); // Catatan Keuangan
       case 2:
-        return const Icon(Icons.fastfood_outlined); // Makanan
+        return const Icon(Icons.check_circle_outline); // Kebutuhan Harian
       case 3:
-        return const Icon(Icons.chair_alt_outlined); // Peralatan
+        return const Icon(Icons.fastfood_outlined); // Makanan
       case 4:
-        return const Icon(Icons.local_laundry_service_outlined); // Laundry
+        return const Icon(Icons.chair_alt_outlined); // Peralatan
       case 5:
-        return const Icon(Icons.receipt_long_outlined); // Tagihan
+        return const Icon(Icons.local_laundry_service_outlined); // Laundry
       case 6:
-        return const Icon(Icons.shopping_cart_outlined); // Belanja
+        return const Icon(Icons.receipt_long_outlined); // Tagihan
       case 7:
+        return const Icon(Icons.shopping_cart_outlined); // Belanja
+      case 8:
         return const Icon(Icons.notifications_outlined); // Pengingat
       default:
         return const Icon(Icons.error); // Error (jaga-jaga)
