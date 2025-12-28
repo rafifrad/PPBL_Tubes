@@ -7,17 +7,22 @@ import 'screens/home_screen.dart';
 import 'screens/food_screen.dart';
 import 'screens/equipment_screen.dart';
 import 'screens/laundry_screen.dart';
-import 'screens/expense_screen.dart';
 import 'screens/bill_screen.dart';
 import 'screens/finance_note_screen.dart';
-import 'screens/daily_need_screen.dart';
 import 'screens/shopping_list_screen.dart';
 import 'screens/activity_reminder_screen.dart';
+import 'screens/unified_finance_screen.dart';
+import 'screens/passcode_setup_screen.dart';
+import 'screens/passcode_lock_screen.dart';
+import 'services/passcode_service.dart';
 
 // Fungsi utama - ini yang pertama kali dijalankan saat aplikasi dibuka
-void main() {
+void main() async {
   // Pastikan Flutter sudah siap sebelum menjalankan aplikasi
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inisialisasi passcode service
+  await PasscodeService.instance.init();
 
   // Jalankan aplikasi dengan widget MyApp sebagai root
   runApp(const MyApp());
@@ -125,9 +130,129 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // Halaman pertama yang ditampilkan
-      home: const MainScreen(),
+      // Halaman pertama yang ditampilkan - dengan auth wrapper
+      home: const AuthWrapper(),
     );
+  }
+}
+
+// AuthWrapper - Menangani flow autentikasi
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  final _passcodeService = PasscodeService.instance;
+  bool _isChecking = true;
+  bool _needsSetup = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPasscodeStatus();
+  }
+
+  Future<void> _checkPasscodeStatus() async {
+    await Future.delayed(const Duration(milliseconds: 500)); // Splash delay
+    
+    setState(() {
+      _needsSetup = !_passcodeService.hasPasscode();
+      _isChecking = false;
+    });
+
+    if (!_needsSetup) {
+      _showLockScreen();
+    } else {
+      _showSetupScreen();
+    }
+  }
+
+  Future<void> _showSetupScreen() async {
+    if (!mounted) return;
+    
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PasscodeSetupScreen(),
+        fullscreenDialog: true,
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Setup berhasil, langsung ke main screen
+      _navigateToMainScreen();
+    } else if (mounted) {
+      // User cancel setup, show setup again
+      _showSetupScreen();
+    }
+  }
+
+  Future<void> _showLockScreen() async {
+    if (!mounted) return;
+    
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PasscodeLockScreen(),
+        fullscreenDialog: true,
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Unlock berhasil
+      _navigateToMainScreen();
+    } else if (result == false && mounted) {
+      // User reset passcode, show setup
+      setState(() => _needsSetup = true);
+      _showSetupScreen();
+    } else if (mounted) {
+      // User cancel, show lock again
+      _showLockScreen();
+    }
+  }
+
+  void _navigateToMainScreen() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MainScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isChecking) {
+      return Scaffold(
+        backgroundColor: Colors.indigo[700],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.account_balance_wallet,
+                size: 80,
+                color: Colors.white.withOpacity(0.9),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Kelola Kebutuhan Kost',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 40),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 
@@ -146,27 +271,23 @@ class _MainScreenState extends State<MainScreen> {
   // List semua halaman/screen yang ada di aplikasi
   final List<Widget> _screens = [
     const HomeScreen(), // 0
-    const FoodScreen(), // 1
-    const EquipmentScreen(), // 2
-    const LaundryScreen(), // 3
-    const ExpenseScreen(), // 4
+    const UnifiedFinanceScreen(), // 1 (Gabungan Pengeluaran & Kebutuhan)
+    const FoodScreen(), // 2
+    const EquipmentScreen(), // 3
+    const LaundryScreen(), // 4
     const BillScreen(), // 5
-    const FinanceNoteScreen(), // 6
-    const DailyNeedScreen(), // 7
-    const ShoppingListScreen(), // 8
-    const ActivityReminderScreen(), // 9
+    const ShoppingListScreen(), // 6
+    const ActivityReminderScreen(), // 7
   ];
 
   // List judul untuk setiap halaman (ditampilkan di AppBar)
   final List<String> _titles = [
     'Home',
+    'Keuangan & Kebutuhan', // Judul baru
     'Persediaan Makanan',
     'Peralatan Kamar',
     'Laundry',
-    'Pengeluaran Kos',
     'Tagihan Bulanan',
-    'Catatan Keuangan',
-    'Kebutuhan Harian',
     'Daftar Belanja',
     'Pengingat Kegiatan',
   ];
@@ -246,22 +367,18 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return const Icon(Icons.home_outlined); // Home
       case 1:
-        return const Icon(Icons.fastfood_outlined); // Makanan
+        return const Icon(Icons.account_balance_wallet_outlined); // Keuangan & Kebutuhan
       case 2:
-        return const Icon(Icons.chair_alt_outlined); // Peralatan
+        return const Icon(Icons.fastfood_outlined); // Makanan
       case 3:
-        return const Icon(Icons.local_laundry_service_outlined); // Laundry
+        return const Icon(Icons.chair_alt_outlined); // Peralatan
       case 4:
-        return const Icon(Icons.payments_outlined); // Pengeluaran
+        return const Icon(Icons.local_laundry_service_outlined); // Laundry
       case 5:
         return const Icon(Icons.receipt_long_outlined); // Tagihan
       case 6:
-        return const Icon(Icons.sticky_note_2_outlined); // Catatan Keuangan
-      case 7:
-        return const Icon(Icons.check_circle_outline); // Kebutuhan Harian
-      case 8:
         return const Icon(Icons.shopping_cart_outlined); // Belanja
-      case 9:
+      case 7:
         return const Icon(Icons.notifications_outlined); // Pengingat
       default:
         return const Icon(Icons.error); // Error (jaga-jaga)

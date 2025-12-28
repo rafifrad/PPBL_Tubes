@@ -272,6 +272,16 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showExpenseDialog(),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
     // Kalau masih loading, tampilkan loading indicator
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -306,171 +316,163 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
         groupedExpenses.keys.toList()..sort((a, b) => b.compareTo(a));
 
     // Tampilkan list
-    return Scaffold(
-      body: ListView.builder(
-        padding: const EdgeInsets.all(8),
-        itemCount: sortedDates.length,
-        itemBuilder: (context, index) {
-          String date = sortedDates[index];
-          List<Expense> expenses = groupedExpenses[date]!;
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: sortedDates.length,
+      itemBuilder: (context, index) {
+        String date = sortedDates[index];
+        List<Expense> expenses = groupedExpenses[date]!;
 
-          // Hitung total pengeluaran untuk tanggal ini
-          double total = 0;
-          for (var expense in expenses) {
-            total += expense.amount;
-          }
+        // Hitung total pengeluaran untuk tanggal ini
+        double total = 0;
+        for (var expense in expenses) {
+          total += expense.amount;
+        }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // HEADER TANGGAL
-              Container(
-                padding: const EdgeInsets.all(12),
-                color: Colors.grey[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Tanggal (Hari Ini, Kemarin, dll)
-                    Text(
-                      _formatDate(date),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // HEADER TANGGAL
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: Colors.grey[200],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Tanggal (Hari Ini, Kemarin, dll)
+                  Text(
+                    _formatDate(date),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
 
-                    // Total pengeluaran hari ini
-                    Text(
-                      'Total: Rp ${_formatRupiah(total)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // LIST PENGELUARAN
-              ...expenses.map((expense) {
-                return Dismissible(
-                  key: Key(expense.id.toString()),
-                  direction: DismissDirection.startToEnd,
-                  confirmDismiss: (direction) async {
-                    final result = await showDialog<bool>(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Konfirmasi'),
-                          content: Text(
-                            'Yakin ingin menghapus pengeluaran ${expense.category}?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Batal'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(true),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('Hapus'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                    return result ?? false;
-                  },
-                  onDismissed: (direction) => _deleteExpense(expense),
-                  background: Container(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 20),
-                    decoration: BoxDecoration(
+                  // Total pengeluaran hari ini
+                  Text(
+                    'Total: Rp ${_formatRupiah(total)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                       color: Colors.red,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.white, size: 28),
-                        SizedBox(width: 8),
-                        Text(
-                          'Hapus',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    child: GestureDetector(
-                      onDoubleTap: () => _showExpenseDialog(expense: expense),
-                      child: ListTile(
-                        // Icon di kiri
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.blue[100],
-                          child: const Icon(Icons.payments, color: Colors.blue),
+                ],
+              ),
+            ),
+
+            // LIST PENGELUARAN
+            ...expenses.map((expense) {
+              return Dismissible(
+                key: Key(expense.id.toString()),
+                direction: DismissDirection.startToEnd,
+                confirmDismiss: (direction) async {
+                  final result = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Konfirmasi'),
+                        content: Text(
+                          'Yakin ingin menghapus pengeluaran ${expense.category}?',
                         ),
-
-                        // Konten utama
-                        title: Text(
-                          expense.category,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-
-                        // Deskripsi (kalau ada)
-                        subtitle:
-                            expense.description.isNotEmpty
-                                ? Text(expense.description)
-                                : null,
-
-                        // Nominal dan hint di kanan
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '-Rp ${_formatRupiah(expense.amount)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red,
-                              ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
                             ),
-                            Text(
-                              '2x Tap',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                            child: const Text('Hapus'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  return result ?? false;
+                },
+                onDismissed: (direction) => _deleteExpense(expense),
+                background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.white, size: 28),
+                      SizedBox(width: 8),
+                      Text(
+                        'Hapus',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                child: Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: GestureDetector(
+                    onDoubleTap: () => _showExpenseDialog(expense: expense),
+                    child: ListTile(
+                      // Icon di kiri
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blue[100],
+                        child: const Icon(Icons.payments, color: Colors.blue),
+                      ),
+
+                      // Konten utama
+                      title: Text(
+                        expense.category,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+
+                      // Deskripsi (kalau ada)
+                      subtitle:
+                          expense.description.isNotEmpty
+                              ? Text(expense.description)
+                              : null,
+
+                      // Nominal dan hint di kanan
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '-Rp ${_formatRupiah(expense.amount)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          Text(
+                            '2x Tap',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+              );
+            }).toList(),
 
-              const SizedBox(height: 8),
-            ],
-          );
-        },
-      ),
-
-      // Tombol tambah di kanan bawah
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showExpenseDialog(),
-        child: const Icon(Icons.add),
-      ),
+            const SizedBox(height: 8),
+          ],
+        );
+      },
     );
   }
 }

@@ -63,68 +63,9 @@ class _FinanceNoteScreenState extends State<FinanceNoteScreen> {
     });
   }
 
-  // Fungsi untuk menampilkan dialog "Tambah Saldo" (Pemasukan Manual)
-  Future<void> _showAddBalanceDialog() async {
-    final noteCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
 
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tambah Saldo'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Input Nominal
-            TextField(
-              controller: amountCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nominal Pemasukan',
-                prefixText: 'Rp ',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            // Input Catatan
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Keterangan (Opsional)',
-                hintText: 'Contoh: Kiriman Orang Tua',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (amountCtrl.text.isEmpty) return;
 
-              final note = FinanceNote(
-                note: noteCtrl.text.isEmpty ? 'Tambah Saldo Manual' : noteCtrl.text,
-                amount: double.tryParse(amountCtrl.text) ?? 0,
-                type: 'income',
-                source: 'manual',
-              );
 
-              await _db.insertFinanceNote(note);
-              if (!mounted) return;
-              Navigator.pop(context);
-              _refreshData(); // Refresh tampilan
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // Fungsi untuk menghapus transaksi
   Future<void> _deleteNote(FinanceNote note) async {
@@ -183,18 +124,7 @@ class _FinanceNoteScreenState extends State<FinanceNoteScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      // Tombol Tambah Saldo
-                      ElevatedButton.icon(
-                        onPressed: _showAddBalanceDialog,
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: const Text('Tambah Saldo'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo[600],
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
