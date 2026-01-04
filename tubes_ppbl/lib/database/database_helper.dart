@@ -33,7 +33,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 9,  // Update ke versi 9 untuk kolom harga (price)
+      version: 10,  // Bump ke version 10 untuk force fix migrasi
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         // ... (kode upgrade versi sebelumnya) ...
@@ -79,6 +79,27 @@ class DatabaseHelper {
           try { await db.execute('ALTER TABLE laundry ADD COLUMN price REAL DEFAULT 0'); } catch (e) {}
           try { await db.execute('ALTER TABLE kebutuhan_harian ADD COLUMN price REAL DEFAULT 0'); } catch (e) {}
           try { await db.execute('ALTER TABLE daftar_belanja ADD COLUMN price REAL DEFAULT 0'); } catch (e) {}
+        }
+        
+        // --- FORCE FIX MIGRATION (VERSI 10) ---
+        // Jalankan ulang query add column price untuk memastikan
+        if (oldVersion < 10) {
+           // Coba tambah kolom lagi (jika belum ada)
+           try { await db.execute('ALTER TABLE persediaan_makanan ADD COLUMN price REAL DEFAULT 0'); } catch (e) {
+             print('Migrasi V10: Kolom price sudah ada di persediaan_makanan (OK)');
+           }
+           try { await db.execute('ALTER TABLE laundry ADD COLUMN price REAL DEFAULT 0'); } catch (e) {
+             print('Migrasi V10: Kolom price sudah ada di laundry (OK)');
+           }
+           try { await db.execute('ALTER TABLE kebutuhan_harian ADD COLUMN price REAL DEFAULT 0'); } catch (e) {
+             print('Migrasi V10: Kolom price sudah ada di kebutuhan_harian (OK)');
+           }
+           try { await db.execute('ALTER TABLE daftar_belanja ADD COLUMN price REAL DEFAULT 0'); } catch (e) {
+             print('Migrasi V10: Kolom price sudah ada di daftar_belanja (OK)');
+           }
+           
+           // Index untuk performa query
+           try { await db.execute('CREATE INDEX idx_timestamp ON catatan_keuangan(timestamp)'); } catch(e) {}
         }
       },
     );
@@ -196,6 +217,7 @@ class DatabaseHelper {
   Future<int> insertFood(Food food) async {
     final db = await database;
     final id = await db.insert('persediaan_makanan', food.toMap());
+    print('Debug: Inserted Food ID: $id. Price: ${food.price}');
     
     // OTOMATIS: Catat pengeluaran jika harga > 0
     if (food.price > 0) {
@@ -205,6 +227,8 @@ class DatabaseHelper {
         type: 'expense',
         source: 'makanan',
       );
+    } else {
+      print('Debug: Price is 0, skipping transaction record.');
     }
     return id;
   }
@@ -308,6 +332,7 @@ class DatabaseHelper {
   Future<int> insertLaundry(Laundry laundry) async {
     final db = await database;
     final id = await db.insert('laundry', laundry.toMap());
+    print('Debug: Inserted Laundry ID: $id. Price: ${laundry.price}');
     
     // OTOMATIS: Catat biaya laundry
     if (laundry.price > 0) {
@@ -426,6 +451,7 @@ class DatabaseHelper {
   Future<int> insertBill(Bill bill) async {
     final db = await database;
     final id = await db.insert('tagihan_bulanan', bill.toMap());
+    print('Debug: Inserted Bill ID: $id. Amount: ${bill.amount}');
     
     // Auto-record ke catatan keuangan
     await recordTransaction(
@@ -506,26 +532,32 @@ class DatabaseHelper {
     required String source,
   }) async {
     final db = await database;
-    
-    // 1. Buat object catatan keuangan
-    final transaction = FinanceNote(
-      note: note,
-      amount: amount,
-      type: type,
-      source: source,
-      timestamp: DateTime.now(),
-    );
+    try {
+      print('Debug: Recording Transaction: $note ($amount) - $source');
+      
+      // 1. Buat object catatan keuangan
+      final transaction = FinanceNote(
+        note: note,
+        amount: amount,
+        type: type,
+        source: source,
+        timestamp: DateTime.now(),
+      );
 
-    // 2. Simpan ke tabel catatan_keuangan
-    await db.insert('catatan_keuangan', transaction.toMap());
+      // 2. Simpan ke tabel catatan_keuangan
+      await db.insert('catatan_keuangan', transaction.toMap());
 
-    // 3. Update saldo total
-    // Jika income maka +, jika expense maka -
-    final change = type == 'income' ? amount : -amount;
-    await _updateBalance(change);
+      // 3. Update saldo total
+      // Jika income maka +, jika expense maka -
+      final change = type == 'income' ? amount : -amount;
+      await _updateBalance(change);
 
-    // 4. Beritahu listener bahwa ada transaksi masuk
-    _transactionController.add(null);
+      // 4. Beritahu listener bahwa ada transaksi masuk
+      _transactionController.add(null);
+      print('Debug: Transaction Success');
+    } catch (e) {
+      print('Debug: Error Recording Transaction: $e');
+    }
   }
 
   // ========== CRUD CATATAN KEUANGAN (VERSI BARU) ==========
@@ -583,6 +615,7 @@ class DatabaseHelper {
   Future<int> insertDailyNeed(DailyNeed dailyNeed) async {
     final db = await database;
     final id = await db.insert('kebutuhan_harian', dailyNeed.toMap());
+    print('Debug: Inserted DailyNeed ID: $id. Price: ${dailyNeed.price}');
     
     // OTOMATIS: Catat pengeluaran
     if (dailyNeed.price > 0) {
@@ -592,6 +625,8 @@ class DatabaseHelper {
         type: 'expense',
         source: 'harian',
       );
+    } else {
+      print('Debug: Price is 0, skipping transaction record.');
     }
     return id;
   }
@@ -650,6 +685,7 @@ class DatabaseHelper {
   Future<int> insertShoppingList(ShoppingList shoppingList) async {
     final db = await database;
     final id = await db.insert('daftar_belanja', shoppingList.toMap());
+    print('Debug: Inserted ShoppingList ID: $id. Price: ${shoppingList.price}');
     
     // OTOMATIS: Catat pengeluaran
     if (shoppingList.price > 0) {
@@ -659,6 +695,8 @@ class DatabaseHelper {
         type: 'expense',
         source: 'belanja',
       );
+    } else {
+      print('Debug: Price is 0, skipping transaction record.');
     }
     return id;
   }

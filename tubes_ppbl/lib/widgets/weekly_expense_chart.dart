@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../database/database_helper.dart';
-import '../models/expense.dart';
+import '../models/finance_note.dart'; // Import FinanceNote model
 
 /// Widget untuk menampilkan chart pengeluaran mingguan
 class WeeklyExpenseChart extends StatefulWidget {
@@ -14,22 +14,31 @@ class WeeklyExpenseChart extends StatefulWidget {
 
 class _WeeklyExpenseChartState extends State<WeeklyExpenseChart> {
   final _db = DatabaseHelper.instance;
-  List<Expense> _expenses = [];
+  List<FinanceNote> _transactions = []; // Ganti Expense jadi FinanceNote
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadExpenses();
+    _loadData();
   }
 
-  Future<void> _loadExpenses() async {
-    setState(() => _loading = true);
-    final data = await _db.getAllExpenses();
-    setState(() {
-      _expenses = data;
-      _loading = false;
-    });
+  // Load refresh jika widget di-rebuild karena parent setState
+  @override
+  void didUpdateWidget(WeeklyExpenseChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Jangan set loading true agar tidak kerdip berlebihan saat refresh
+    final data = await _db.getAllFinanceNotes();
+    if (mounted) {
+      setState(() {
+        _transactions = data.where((item) => item.type == 'expense').toList();
+        _loading = false;
+      });
+    }
   }
 
   // Hitung total pengeluaran per hari untuk 7 hari terakhir
@@ -43,12 +52,11 @@ class _WeeklyExpenseChartState extends State<WeeklyExpenseChart> {
     }
 
     // Hitung total per hari
-    for (var expense in _expenses) {
-      final expenseDate = DateTime.parse(expense.date);
-      final daysDiff = now.difference(expenseDate).inDays;
+    for (var note in _transactions) {
+      final daysDiff = now.difference(note.timestamp).inDays;
 
       if (daysDiff >= 0 && daysDiff < 7) {
-        weekData[6 - daysDiff] = (weekData[6 - daysDiff] ?? 0) + expense.amount;
+        weekData[6 - daysDiff] = (weekData[6 - daysDiff] ?? 0) + note.amount;
       }
     }
 
