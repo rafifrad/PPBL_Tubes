@@ -1,4 +1,4 @@
-// Import package Flutter untuk UI
+import 'dart:async'; // Untuk StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Untuk format mata uang
 // Import model FinanceNote
@@ -29,10 +29,20 @@ class _FinancialRecordScreenState extends State<FinancialRecordScreen> {
   // Status loading
   bool _isLoading = true;
 
+  // Subscription untuk mendengarkan perubahan transaksi
+  StreamSubscription? _transactionSubscription;
+
   @override
   void initState() {
     super.initState();
     _loadData(); // Load data saat pertama kali buka halaman
+    
+    // Dengarkan perubahan database (misal dari menu Makanan/Laundry)
+    _transactionSubscription = _dbHelper.onTransactionChanged.listen((_) {
+      if (mounted) {
+        _loadData(); // Reload data otomatis
+      }
+    });
   }
 
   // Fungsi untuk mengambil semua data transaksi dan saldo dari database
@@ -158,6 +168,12 @@ class _FinancialRecordScreenState extends State<FinancialRecordScreen> {
       default:
         return Colors.indigo;
     }
+  }
+
+  @override
+  void dispose() {
+    _transactionSubscription?.cancel(); // Hapus listener
+    super.dispose();
   }
 
   @override

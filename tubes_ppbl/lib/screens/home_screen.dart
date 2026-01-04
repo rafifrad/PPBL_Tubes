@@ -1,5 +1,6 @@
-// Import package Flutter untuk UI
+import 'dart:async'; // Untuk StreamSubscription
 import 'package:flutter/material.dart';
+import '../database/database_helper.dart'; // Import DatabaseHelper
 // Import service untuk menyimpan preferensi user (nama)
 import '../services/preferences_service.dart';
 // Import widgets untuk chart dan summary
@@ -23,10 +24,21 @@ class _HomeScreenState extends State<HomeScreen> {
   String _name = 'Pengguna';         // Nama user (default: "Pengguna")
   final _nameCtrl = TextEditingController();  // Controller untuk input nama
 
+  // Subscription untuk mendengarkan perubahan transaksi
+  StreamSubscription? _transactionSubscription;
+
   @override
   void initState() {
     super.initState();
     _load();  // Load data saat pertama kali buka halaman
+    
+    // Dengarkan perubahan database
+    _transactionSubscription = DatabaseHelper.instance.onTransactionChanged.listen((_) {
+      if (mounted) {
+        _load(); // Reload data jika ada perubahan
+        setState(() {}); // Trigger rebuild
+      }
+    });
   }
 
   // Fungsi untuk load nama user dari SharedPreferences
@@ -87,7 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();  // Hapus controller saat halaman ditutup (hindari memory leak)
+    _transactionSubscription?.cancel(); // Hapus listener saat halaman ditutup
+    _nameCtrl.dispose();
     super.dispose();
   }
 
