@@ -12,7 +12,6 @@ import 'screens/laundry_screen.dart';
 import 'screens/bill_screen.dart';
 import 'screens/shopping_list_screen.dart';
 import 'screens/activity_reminder_screen.dart';
-import 'screens/passcode_setup_screen.dart';
 import 'screens/passcode_lock_screen.dart';
 import 'services/passcode_service.dart';
 
@@ -146,82 +145,55 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   final _passcodeService = PasscodeService.instance;
-  bool _isChecking = true;
-  bool _needsSetup = false;
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
-    _checkPasscodeStatus();
+    _checkAuth();
   }
 
-  Future<void> _checkPasscodeStatus() async {
-    await Future.delayed(const Duration(milliseconds: 500)); // Splash delay
+  Future<void> _checkAuth() async {
+    // Tambahkan delay sedikit untuk splash effect
+    await Future.delayed(const Duration(milliseconds: 500));
     
-    setState(() {
-      _needsSetup = !_passcodeService.hasPasscode();
-      _isChecking = false;
-    });
+    // Cek apakah HP support fingerprint & ada enroll
+    final isBiometricAvailable = await _passcodeService.isBiometricAvailable();
 
-    if (!_needsSetup) {
-      _showLockScreen();
+    if (!isBiometricAvailable) {
+      // Jika TIDAK ada fingerprint, langsung masuk (Auto-login)
+      setState(() {
+        _isAuthenticated = true;
+        _isLoading = false;
+      });
     } else {
-      _showSetupScreen();
-    }
-  }
-
-  Future<void> _showSetupScreen() async {
-    if (!mounted) return;
-    
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const PasscodeSetupScreen(),
-        fullscreenDialog: true,
-      ),
-    );
-
-    if (result == true && mounted) {
-      // Setup berhasil, langsung ke main screen
-      _navigateToMainScreen();
-    } else if (mounted) {
-      // User cancel setup, show setup again
-      _showSetupScreen();
+      // Jika ADA fingerprint, harus auth dulu
+      setState(() => _isLoading = false);
+      _showLockScreen();
     }
   }
 
   Future<void> _showLockScreen() async {
-    if (!mounted) return;
-    
-    final result = await Navigator.of(context).push(
+    // Tampilkan layar kunci biometrik
+    final success = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => const PasscodeLockScreen(),
-        fullscreenDialog: true,
       ),
     );
 
-    if (result == true && mounted) {
-      // Unlock berhasil
-      _navigateToMainScreen();
-    } else if (result == false && mounted) {
-      // User reset passcode, show setup
-      setState(() => _needsSetup = true);
-      _showSetupScreen();
-    } else if (mounted) {
-      // User cancel, show lock again
-      _showLockScreen();
+    if (success == true) {
+      setState(() => _isAuthenticated = true);
+    } else {
+      // Loop auth jika user cancel (karena ini lock screen)
+      // Opsional: Boleh exit(0) jika user menekan Back terus menerus
+      _showLockScreen(); 
     }
-  }
-
-  void _navigateToMainScreen() {
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const MainScreen()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isChecking) {
+    if (_isLoading) {
       return Scaffold(
         backgroundColor: Colors.indigo[700],
         body: Center(
@@ -252,7 +224,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
       );
     }
 
-    return const SizedBox.shrink();
+    if (_isAuthenticated) {
+      return const MainScreen();
+    }
+
+    // Dummy screen saat transisi ke lock screen
+    return const Scaffold(
+      backgroundColor: Colors.indigo,
+      body: Center(child: CircularProgressIndicator(color: Colors.white)),
+    );
   }
 }
 

@@ -7,7 +7,7 @@ class PreferencesService {
   PreferencesService._init();
 
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
   // Menyimpan nama pengguna
